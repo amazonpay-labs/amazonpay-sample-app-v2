@@ -1,0 +1,17 @@
+{
+  "name": "octopus_in_nodejs",
+  "version": "1.0.0",
+  "description": "- request   - npm install request - express   - npm install express - ejs   - npm install ejs - cookie-parser   - npm install cookie-parser",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@amazonpay/amazon-pay-api-sdk-nodejs": "^2.0.1",
+    "cookie-parser": "^1.4.5",
+    "ejs": "^3.1.2",
+    "express": "^4.17.1"
+  }
+}

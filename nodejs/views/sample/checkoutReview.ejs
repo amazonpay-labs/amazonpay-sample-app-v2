@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en" class="gr__s3-ap-northeast-1_amazonaws_com">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0">
+    <meta name="google" content="notranslate" />
+
+    <!-- ※ URLパラメタとして渡された受注Objectアクセス用のtokenを、Referrerから漏洩させないための指定。 -->
+    <meta name="referrer" content="origin" />
+
+    <title>注文確認ページ：Amazon Payデモサイト</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/static/css/shop-confirmation.css" rel="stylesheet">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+    
+</head>
+
+<body data-gr-c-s-loaded="true">
+<div id="white_cover" style="width:100%; height:100vh; background-color:#fff; position:relative; z-index:1000; display:none;"></div>
+
+<!-- Page Content -->
+<div class="container">
+
+    <div class="row">
+
+        <!-- Blog Entries Column -->
+        <div class="col-md-8">
+
+            <h1 class="my-4">ご注文手続き</h1>
+
+            <div class="card mb-4" id="highlight1" data-toggle="tooltip1" data-container="body" data-placement="left" data-html="true" title="">
+                <div class="card-body">
+                    <h5>お届け先</h5>
+                    <table class="table table-striped">
+                        <tbody>
+                        <tr>
+                            <td>お届け先氏名</td>
+                            <td class="text-right"><%= checkoutSession.shippingAddress.name %></td>
+                        </tr>
+                        <tr>
+                            <td>お届け先郵便番号</td>
+                            <td class="text-right"><%= checkoutSession.shippingAddress.postalCode %></td>
+                        </tr>
+                        <tr>
+                            <td>お届け先住所</td>
+                            <td class="text-right">
+                                <%= (checkoutSession.shippingAddress.stateOrRegion || '')
+                                    + (checkoutSession.shippingAddress.city || '') 
+                                    + (checkoutSession.shippingAddress.addressLine1 || '') 
+                                    + (checkoutSession.shippingAddress.addressLine2 || '') 
+                                    + (checkoutSession.shippingAddress.addressLine3 || '') %>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>お電話番号</td>
+                            <td class="text-right"><%= checkoutSession.shippingAddress.phoneNumber %></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div id="changeButton1" class="btn btn-outline-secondary btn-sm">変更</div>
+                </div>
+                <div class="card-body">
+                    <h5>お支払い方法</h5>
+                    <table class="table table-striped">
+                    <tbody>
+                        <tr>
+                            <td>お支払い方法</td>
+                            <td class="text-right">Amazon Pay</td>
+                        </tr>
+                    </tbody>
+                    </table>
+                    <div id="changeButton2" class="btn btn-outline-secondary btn-sm">変更</div>
+                </div>
+            </div>
+    
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">ご注文内容</h5>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col">商品名</th>
+                            <th scope="col">単価</th>
+                            <th scope="col" class="text-center">数量</th>
+                            <th scope="col" class="text-right">小計</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- AmazonPayController#confirmOrderから受け取ったorder.itemsの情報を表示 -->
+                        <% items.forEach( (item) => { %>
+                        <tr>
+                            <td><img class="confirmation-item" src="/static/sample/img/<%= item.id %>.jpg">
+                            </td>
+                            <td class="text-right"><%= item.name %></td>
+                            <td class="text-right">￥<%= item.price.toLocaleString() %></td>
+                            <td class="text-right"><%= item.num %></td>
+                            <td class="text-right">￥<%= item.summary.toLocaleString() %></td>
+                        </tr>
+                        <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar Widgets Column -->
+        <div class="col-md-4">
+
+            <!-- Side Widget -->
+            <div class="card my-4">
+                <h5 class="card-header">お支払い金額</h5>
+                <div class="card-body" id="highlight2">
+
+                    <!-- AmazonPayController#confirmOrderから受け取ったorderの情報を表示 -->
+                    <table class="table table-striped">
+                        <tbody>
+                        <tr>
+                            <td>商品合計</td>
+                            <td class="text-right">￥<%= price.toLocaleString() %></td>
+                        </tr>
+                        <tr>
+                            <td><strong>税込金額</strong></td>
+                            <td class="text-right"><strong>￥<%= chargeAmount.toLocaleString() %></strong></td>
+                        </tr>
+                        </tbody>
+                    </table>
+
+                    <div>
+                        <div data-toggle="tooltip2" data-container="body" data-placement="top" data-html="true" title=""
+                             data-original-title="&lt;p&gt;みなさまのECサイトへの会員登録・メールマガジンの購読をお勧めすることも可能です。&lt;/p&gt;">
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" checked=""> お客様情報を会員として登録する
+                                </label>
+                            </div>
+
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" checked=""> メールマガジンを購読する
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <a id="purchaseButton" href="#" class="btn btn-info btn-lg btn-block">
+                            購　入
+                        </a>
+                    </div>
+
+                    <br>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    <!-- /.row -->
+
+</div>
+
+<script type="text/javascript" charset="utf-8">
+    document.getElementById("purchaseButton").addEventListener('click', (e) => {
+        $.ajax({
+            type: 'POST',
+            url: '/sample/checkoutSession',
+            data: {},
+        })
+        .then(
+            function(json) { //success
+                if(json.webCheckoutDetails.amazonPayRedirectUrl) {
+                    if(window.androidApp) {
+                        coverScreen();
+                        androidApp.auth(json.webCheckoutDetails.amazonPayRedirectUrl);
+                    } else if(window.webkit && webkit.messageHandlers && webkit.messageHandlers.iosApp) {
+                        coverScreen();
+                        webkit.messageHandlers.iosApp.postMessage({op: 'auth', url: json.webCheckoutDetails.amazonPayRedirectUrl});            
+                    } else {
+                        window.location.href = json.webCheckoutDetails.amazonPayRedirectUrl;
+                    }
+                } else {
+                    location.href = "/static/sample/error.html";
+                }
+            },
+            function() { //failure
+                console.log("error");
+                location.href = "/static/sample/error.html";
+            }
+        );
+    });
+
+    // 送付先の編集 
+    document.getElementById("changeButton1").addEventListener('click', (e) => {
+        if(window.androidApp) {
+            coverScreen();
+            androidApp.login();
+        } else if(window.webkit && webkit.messageHandlers && webkit.messageHandlers.iosApp) {
+            coverScreen();
+            webkit.messageHandlers.iosApp.postMessage({op: 'login'});            
+        } else {
+        }
+    });
+
+    // 支払方法の編集
+    document.getElementById("changeButton2").addEventListener('click', (e) => {
+        if(window.androidApp) {
+            coverScreen();
+            androidApp.login();
+        } else if(window.webkit && webkit.messageHandlers && webkit.messageHandlers.iosApp) {
+            coverScreen();
+            webkit.messageHandlers.iosApp.postMessage({op: 'login'});            
+        } else {
+        }
+    });
+
+    function loadUrl(url) {
+        location.href = url;
+    }
+    
+    function coverScreen() {
+        document.getElementById('white_cover').style.display = 'block';
+    }
+
+    function uncoverScreen() {
+        document.getElementById('white_cover').style.display = 'none';
+    }
+</script>
+
+<!-- /.container -->
+</body>
+
+</html>

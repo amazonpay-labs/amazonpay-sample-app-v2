@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" class="gr__s3-ap-northeast-1_amazonaws_com">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0">
+    <meta name="google" content="notranslate" />
+</head>
+
+<script type="text/javascript" charset="utf-8">
+    function getURLParameter(name, source) {
+        return decodeURIComponent((new RegExp('[?|&amp;|#]' + name + '=' +
+                        '([^&;]+?)(&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
+    }
+
+    const client = getURLParameter("client", location.search);
+    location.href = client === 'iosApp' 
+        ? 'amazonpay-ios-v2://thanks'
+        : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end;';
+</script>
+
+<body></body>
+</html>

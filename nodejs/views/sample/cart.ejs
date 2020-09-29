@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0">
+    <meta name="google" content="notranslate"/>
+
+    <title>Amazon Pay Sample</title>
+    <!-- Bootstrap core CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/static/css/shop-confirmation.css" rel="stylesheet">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+    
+</head>
+<body data-gr-c-s-loaded="true">
+<div id="white_cover" style="width:100%; height:100vh; background-color:#fff; position:relative; z-index:1000; display:none;"></div>
+
+<div class="container">
+    <div class="row">
+
+        <div class="col-md-8">
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <p id="error" class="text-danger"></p>
+                    <h5 class="card-title">購入画面</h5>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col">商品名</th>
+                            <th scope="col">単価</th>
+                            <th scope="col" class="text-center">数量</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><img class="confirmation-item" src="/static/sample/img/item0008.jpg"></td>
+                            <td class="text-right">Fire HD8</td>
+                            <td class="text-right">￥8,980</td>
+                            <td class="text-right">
+                                <select id="hd8" name="hd8" class="form-control">
+                                    <option value="1" selected>1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><img class="confirmation-item" src="/static/sample/img/item0010.jpg"></td>
+                            <td class="text-right">Fire HD10</td>
+                            <td class="text-right">￥15,980</td>
+                            <td class="text-right">
+                                <select id="hd10" name="hd10" class="form-control">
+                                    <option value="1" selected>1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                </select>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    <div id="AmazonPayButton" style="text-align:center"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://static-fe.payments-amazon.com/checkout.js"></script>
+<script type="text/javascript">
+    let client = "browser";
+    if(window.androidApp) {
+        client = "androidApp";
+    } else if(window.webkit && webkit.messageHandlers && webkit.messageHandlers.iosApp) {
+        client = "iosApp";
+    }
+    document.cookie = "client=" + client + ";path=/;secure";
+
+    function saveSelectedValues() {
+        document.getElementById('error').textContent = '';
+        let hd8 = document.getElementById('hd8').value;
+        let hd10 = document.getElementById('hd10').value;
+        document.cookie = "hd8=" + hd8 + ";path=/;secure";
+        document.cookie = "hd10=" + hd10 + ";path=/;secure";
+    }
+    saveSelectedValues();
+    document.getElementById('hd8').addEventListener('change', saveSelectedValues);
+    document.getElementById('hd10').addEventListener('change', saveSelectedValues);
+
+    if(client === 'browser') {
+        amazon.Pay.renderButton('#AmazonPayButton', {
+            merchantId: '<%= merchantId %>',
+            ledgerCurrency: 'JPY', // Amazon Pay account ledger currency
+            sandbox: true, // dev environment
+            checkoutLanguage: 'ja_JP', // render language
+            productType: 'PayAndShip', // checkout type
+            placement: 'Cart', // button placement
+            buttonColor: 'Gold',
+            createCheckoutSessionConfig: {
+                payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2
+                signature: '<%= signature %>', // signature generated in step 3
+                publicKeyId: '<%= publicKeyId %>' 
+            }
+        });
+    } else {
+        let node = document.createElement("input");
+        node.type = "image";
+        node.src = "/static/img/button_images/Sandbox-live-ja_jp-amazonpay-gold-large-button_T2.png";
+        node.addEventListener('click', (e) => {
+            coverScreen();
+            if(client === 'androidApp') {
+                androidApp.login();
+            } else {
+                webkit.messageHandlers.iosApp.postMessage({op: 'login'});            
+            }
+        });
+        document.getElementById("AmazonPayButton").appendChild(node);
+    }
+
+    function loadUrl(url) {
+        location.href = url;
+    }
+    
+    function coverScreen() {
+        document.getElementById('white_cover').style.display = 'block';
+    }
+
+    function uncoverScreen() {
+        document.getElementById('white_cover').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>

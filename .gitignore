@@ -1,0 +1,4 @@
+# others
+*.swp
+!.gitkeep
+.DS_Store

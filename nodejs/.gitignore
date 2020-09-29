@@ -1,0 +1,15 @@
+node_modules/
+
+keys/keyinfo.js
+keys/privateKey.pem
+
+links/.well-known/apple-app-site-association
+links/.well-known/*.json
+
+*.crt
+*.key
+
+# others
+*.swp
+!.gitkeep
+.DS_Store

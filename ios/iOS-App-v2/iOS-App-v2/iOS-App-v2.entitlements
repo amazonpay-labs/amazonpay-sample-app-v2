@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com</string>
+		<string>webcredentials:amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com</string>
+	</array>
+</dict>
+</plist>

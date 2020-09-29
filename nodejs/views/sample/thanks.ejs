@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" class="gr__s3-ap-northeast-1_amazonaws_com">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0">
+    <meta name="google" content="notranslate" />
+
+    <title>注文確認ページ：Amazon Payデモサイト</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="/static/css/shop-confirmation.css" rel="stylesheet">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+</head>
+
+<body data-gr-c-s-loaded="true">
+
+<!-- Page Content -->
+<div class="container">
+
+    <div class="row">
+
+        <!-- Blog Entries Column -->
+        <div class="col-md-8">
+
+            <h3 class="my-4">ご注文を承りました。</h3>
+            ご注文ありがとうございました。<br/>
+            ※ こちらはAmazon Pay V2のMobileアプリ用デモサイトのため課金および実際の発送はございません。<br>
+            <a href="/sample/cart">カートページに戻る</a><br>
+            <br>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">ご注文内容</h5>
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col"></th>
+                            <th scope="col" class="text-center"> 商品名</th>
+                            <th scope="col" class="text-center">単価</th>
+                            <th scope="col" class="text-center">数量</th>
+                            <th scope="col" class="text-right">小計</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <!-- AmazonPayController#confirmOrderから受け取ったorder.itemsの情報を表示 -->
+                        <% items.forEach( (item) => { %>
+                        <tr>
+                            <td><img class="confirmation-item" src="/static/sample/img/<%= item.id %>.jpg">
+                            </td>
+                            <td class="text-center"><%= item.name %></td>
+                            <td class="text-center">￥<%= item.price.toLocaleString() %></td>
+                            <td class="text-center"><%= item.num %></td>
+                            <td class="text-right">￥<%= item.summary.toLocaleString() %></td>
+                        </tr>
+                        <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-body" id="highlight2">
+
+                    <!-- AmazonPayController#confirmOrderから受け取ったorderの情報を表示 -->
+                    <table class="table table-striped">
+                        <tbody>
+                        <tr>
+                            <td>お問合せ番号</td>
+                            <td class="text-right"><%= checkoutSession.merchantMetadata.merchantReferenceId %></td>
+                        </tr>
+                        <tr>
+                            <td>商品合計</td>
+                            <td class="text-right">￥<%= price.toLocaleString() %></td>
+                        </tr>
+                        <tr>
+                            <td><strong>税込金額</strong></td>
+                            <td class="text-right"><strong>￥<%= chargeAmount.toLocaleString() %></strong></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mb-4" id="highlight1" data-toggle="tooltip1" data-container="body" data-placement="left" data-html="true" title="">
+                <div class="card-body">
+                    <h5>お届け先</h5>
+                    <table class="table table-striped">
+                        <tbody>
+                        <tr>
+                            <td>お届け先氏名</td>
+                            <td class="text-right"><%= checkoutSession.shippingAddress.name %></td>
+                        </tr>
+                        <tr>
+                            <td>お届け先郵便番号</td>
+                            <td class="text-right"><%= checkoutSession.shippingAddress.postalCode %></td>
+                        </tr>
+                        <tr>
+                            <td>お届け先住所</td>
+                            <td class="text-right">
+                                <%= (checkoutSession.shippingAddress.stateOrRegion || '')
+                                    + (checkoutSession.shippingAddress.city || '') 
+                                    + (checkoutSession.shippingAddress.addressLine1 || '') 
+                                    + (checkoutSession.shippingAddress.addressLine2 || '') 
+                                    + (checkoutSession.shippingAddress.addressLine3 || '') %>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>お電話番号</td>
+                            <td class="text-right"><%= checkoutSession.shippingAddress.phoneNumber %></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-body">
+                    <h5>お支払い方法</h5>
+                    <table class="table table-striped">
+                    <tbody>
+                        <tr>
+                            <td>お支払い方法</td>
+                            <td class="text-right">Amazon Pay</td>
+                        </tr>
+                    </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /.row -->
+
+    <a href="/sample/cart">カートページに戻る</a><br>
+
+</div>
+
+<!-- /.container -->
+</body>
+
+</html>

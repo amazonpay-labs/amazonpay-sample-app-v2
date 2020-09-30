@@ -17,7 +17,7 @@ nodejs: v12.16.1 以上
 ## リポジトリのclone
 もしまだであれば、まずは本リポジトリをcloneして下さい。  
 ```
-git clone https://github.com/amazonpay-labs/amazonpay-mobileapp-sample-v2.git
+git clone https://github.com/amazonpay-labs/amazonpay-sample-app-v2.git
 ```
 cloneされてできたディレクトリの下の「nodejs」ディレクトリの下が、こちらのWebアプリケーションのプロジェクトになります。  
 

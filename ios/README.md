@@ -165,7 +165,7 @@ URLを指定して、SFSafariViewController(iOS側のSecure WebView)を起動し
 
 <img src="docimg/appLogin.png" width="500">  
 
-こちらの画面ではAmazon Payボタンを裏で出力し、こちらを自動的にJavaScriptでClickすることで、Amazonログイン画面に遷移させています。  
+こちらの画面ではAmazon Payが用意した「initCheckout」というメソッドをJavaScriptでcallすることで、Amazonログイン画面に遷移させています。  
 
 ### Server側のAmazon Payボタン出力準備
 Amazon Payボタンを出力するための準備として、Server側にてAmazon Payボタンの出力に必要なpayloadと signatureの生成、その他の設定値の受け渡しを行います。  
@@ -207,34 +207,25 @@ function createPayload(url) {
 <!-- nodejs/views/appLogin.ejsより抜粋 (見やすくするため、一部加工しています。) -->
 
     :
-<div class="hidden">
-    <div id="AmazonPayButton"></div>
-</div>
-
 <script src="https://static-fe.payments-amazon.com/checkout.js"></script>
 <script type="text/javascript" charset="utf-8">
-    amazon.Pay.renderButton('#AmazonPayButton', {
+    amazon.Pay.initCheckout({
         merchantId: '<%= merchantId %>',
         ledgerCurrency: 'JPY', // Amazon Pay account ledger currency
         sandbox: true, // dev environment
         checkoutLanguage: 'ja_JP', // render language
         productType: 'PayAndShip', // checkout type
         placement: 'Cart', // button placement
-        buttonColor: 'Gold',
         createCheckoutSessionConfig: {
             payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (※ HTML Escapeをしないで出力する)
             signature: '<%= signature %>', // signature generated in step 3
             publicKeyId: '<%= publicKeyId %>' 
         }
-    });
-
-    setTimeout(() => {
-        document.getElementById("AmazonPayButton").click();
-    }, 0);
+    });    
 </script>
 ```
 
-上記のようにAmazon Payボタンを生成してJavaScriptでclickさせることで、自動的にAmazon Payのログイン画面に遷移させています。  
+この「initCheckout」メソッドの呼出により、自動的にAmazon Payのログイン画面に遷移させています。  
 こちらのファイルは[EJS](https://ejs.co/)というTemplate Engineを使って作成されていますが、構文はTemplate Engineとしては一般的なものであるため、比較的簡単に理解できるかと思います。  
 
 ## Amazon側の画面からのリダイレクトによる、Universal Linksの発動

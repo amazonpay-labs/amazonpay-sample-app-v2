@@ -21,27 +21,10 @@
     <a id="nextButton" href="#" class="btn btn-info btn-lg btn-block">
         次　へ
     </a>
-    <div id="nextDiv" href="#" class="btn btn-info btn-lg btn-block">
-        次　へ
-    </div>
-    <span id="nextSpan" href="#" class="btn btn-info btn-lg btn-block">
-        次　へ
-    </span>
-    <input id="nextInput" type="submit" class="btn btn-info btn-lg btn-block" value="次　へ">
 </div>
 <script>
-    // document.getElementById("nextButton").href = 
-    //     "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" + location.search;
-    document.getElementById("nextButton").href = "/sample/redirect" + location.search; // worked on Android7 - 10 and iOS 11.2 - 14.0!
-    document.getElementById("nextDiv").addEventListener("click", () => {
-        location.href = "/sample/redirect" + location.search;
-    }); // worked on Android7 - 10 and iOS 11.2 - 14.0!
-    document.getElementById("nextSpan").addEventListener("click", () => {
-        location.href = "/sample/redirect" + location.search;
-    }); // worked on Android7 - 10 and iOS 11.2 - 14.0!
-    document.getElementById("nextInput").addEventListener("click", () => {
-        location.href = "/sample/redirect" + location.search;
-    }); // worked on Android7 - 10 and iOS 11.2 - 14.0!
+    document.getElementById("nextButton").href = 
+        "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" + location.search;
 </script>
 </body>
 </html>

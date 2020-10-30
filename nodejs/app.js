@@ -6,10 +6,10 @@
 
 // Config
 const fs = require('fs');
-const options = {
-    key: fs.readFileSync('ssl/sample.key'),
-    cert: fs.readFileSync('ssl/sample.crt')
-};
+// const options = {
+//     key: fs.readFileSync('ssl/sample.key'),
+//     cert: fs.readFileSync('ssl/sample.crt')
+// };
 const {keyinfo} = require('./keys/keyinfo');
 
 // Web application

@@ -18,12 +18,12 @@ const app = express();
 const ejs = require('ejs');
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
-const https = require('https');
+//const https = require('https');
 app.set('ejs', ejs.renderFile)
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
 app.use(cookieParser());
-const appServer = https.createServer(options, app);
+//const appServer = https.createServer(options, app);
 
 // Amazon Pay SDK
 const Client = require('@amazonpay/amazon-pay-api-sdk-nodejs');
@@ -162,6 +162,9 @@ app.get('/sample/thanks', async (req, res) => {
 //---------------------
 // Start App server
 //---------------------
-const APP_PORT = process.env.APP_PORT || 3443;
-appServer.listen(APP_PORT);
-console.log(`App listening on port ${APP_PORT}`);
+const APP_PORT = process.env.APP_PORT || 80;
+//appServer.listen(APP_PORT);
+// HTTPサーバを起動する
+app.listen(APP_PORT, () => {
+    console.log(`App listening on port ${APP_PORT}`);
+});

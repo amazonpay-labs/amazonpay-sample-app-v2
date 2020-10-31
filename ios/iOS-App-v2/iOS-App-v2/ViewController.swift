@@ -42,7 +42,7 @@ class ViewController: UIViewController {
             
             // WebViewの生成、orderページの読み込み
             webView = WKWebView(frame: rect, configuration: webConfig)
-            let webUrl = URL(string: "https://localhost:3443/sample/cart")!
+            let webUrl = URL(string: "https://d69h4tzaewska.cloudfront.net/sample/cart")!
             let myRequest = URLRequest(url: webUrl)
             webView.load(myRequest)
             
@@ -65,7 +65,7 @@ class ViewController: UIViewController {
         print("ViewController#invokeButtonPage")
         
         token = UUID().uuidString.lowercased()
-        let safariView = SFSafariViewController(url: NSURL(string: "https://localhost:3443/appLogin?client=iosApp&token=\(token!)")! as URL)
+        let safariView = SFSafariViewController(url: NSURL(string: "https://d69h4tzaewska.cloudfront.net/appLogin?client=iosApp&token=\(token!)")! as URL)
         present(safariView, animated: true, completion: nil)
     }
     

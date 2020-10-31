@@ -51,7 +51,7 @@ app.get('/sample/cart', async (req, res) => {
 // App Login Screen
 //-------------------
 app.get('/appLogin', async (req, res) => {
-    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`));
+    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_staging.html?token=${req.query.token}`));
 });
 
 function calcConfigs(url) {

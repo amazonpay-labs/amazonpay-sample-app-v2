@@ -44,7 +44,7 @@ app.use('/static', express.static('static'));
 // Cart Screen
 //-------------------
 app.get('/sample/cart', async (req, res) => {
-    res.render('sample/cart.ejs', calcConfigs("https://localhost:3443/sample/checkoutReview"));
+    res.render('sample/cart.ejs', calcConfigs("https://d69h4tzaewska.cloudfront.net/sample/checkoutReview"));
 });
 
 //-------------------
@@ -120,8 +120,8 @@ app.post('/sample/checkoutSession', async (req, res) => {
 });
 
 async function updateCheckoutSession(data) {
-    const url = data.client === 'browser' ? "https://localhost:3443/sample/thanks" :
-        `https://${data.host}/static/dispatcher.html?client=${data.client}`;
+    const url = data.client === 'browser' ? "https://d69h4tzaewska.cloudfront.net/sample/thanks" :
+        `https://d69h4tzaewska.cloudfront.net/static/dispatcher.html?client=${data.client}`;
     return await apClient.updateCheckoutSession(data.amazonCheckoutSessionId, {
         webCheckoutDetails: {
             checkoutResultReturnUrl: url

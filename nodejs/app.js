@@ -70,9 +70,19 @@ function createPayload(url) {
 }
 
 //-------------------------
+// Redirect
+//-------------------------
+app.get('/sample/redirect', async (req, res) => {
+    console.log("Redirecting...");
+    res.redirect('https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html' + req._parsedUrl.search);
+});
+
+//-------------------------
 // Checkout Review Screen
 //-------------------------
 app.get('/sample/checkoutReview', async (req, res) => {
+    console.log("Universal Links: Succeeded!");
+    
     // 受注情報
     let order = {host: req.headers.host, amazonCheckoutSessionId: req.query.amazonCheckoutSessionId,
         client: req.cookies.client, hd8: req.cookies.hd8, hd10: req.cookies.hd10, items: []};

@@ -15,22 +15,27 @@
 </head>
 <body data-gr-c-s-loaded="true">
 <div class="container">
-    <h3 class="my-4">Amazon Login 処理完了</h3>
-    「次へ」ボタンをタップして下さい。<br>
+    <h3 class="my-4">Amazon Login Completed!</h3>
+    Please tap "next" button<br>
     <br>
+    <!-- Succeeded! -->
     <a id="nextButton" href="#" class="btn btn-info btn-lg btn-block">
-        次　へ
+        next(link direct to Universal Links)
     </a>
+    <!-- Succeeded! -->
     <a id="nextButton2" href="#" class="btn btn-info btn-lg btn-block">
-        次　へ2
+        next(link redirect to Universal Links)
     </a>
+    <!-- Succeeded! -->
     <div id="nextDiv" href="#" class="btn btn-info btn-lg btn-block">
-        次　へDiv
+        next(div redirect to Universal Links)
     </div>
+    <!-- Succeeded! -->
     <span id="nextSpan" href="#" class="btn btn-info btn-lg btn-block">
-        次　へSpan
+        next(span redirect to Universal Links)
     </span>
-    <input id="nextInput" type="submit" class="btn btn-info btn-lg btn-block" value="次　へSubmit">
+    <!-- Succeeded! -->
+    <input id="nextInput" type="submit" class="btn btn-info btn-lg btn-block" value="next(submit redirect to Universal Links)">
 </div>
 <script>
     document.getElementById("nextButton").href = 
@@ -44,6 +49,7 @@
     });
     document.getElementById("nextInput").addEventListener("click", () => {
         location.href = "/sample/redirect" + location.search;
-    });</script>
+    });
+</script>
 </body>
 </html>

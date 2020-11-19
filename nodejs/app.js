@@ -54,6 +54,13 @@ app.get('/appLogin', async (req, res) => {
     res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_staging.html?token=${req.query.token}`));
 });
 
+//-------------------
+// [Test] App Login Screen
+//-------------------
+app.get('/appLogin_cancelTest', async (req, res) => {
+    res.render('appLogin.ejs', calcConfigs(`https://d69h4tzaewska.cloudfront.net/static/next.html?token=${req.query.token}`));
+});
+
 function calcConfigs(url) {
     const payload = createPayload(url);
     const signature = apClient.generateButtonSignature(payload);

@@ -51,29 +51,46 @@ app.get('/sample/cart', async (req, res) => {
 // App Login Screen
 //-------------------
 app.get('/appLogin', async (req, res) => {
-    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_staging.html?token=${req.query.token}`));
+    res.render('appLogin.ejs', calcConfigs(
+        `https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_staging.html?token=${req.query.token}`, 
+        'https://d69h4tzaewska.cloudfront.net/static/cancel.html'));
 });
 
 //-------------------
-// [Test] App Login Screen
+// [Test] App Login Screen - Different Domain
+//-------------------
+app.get('/appLogin_differentDomain', async (req, res) => {
+    res.render('appLogin.ejs', calcConfigs(
+        `https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_staging.html?token=${req.query.token}`));
+});
+
+//-------------------
+// [Test] App Login Screen - Same Domain
 //-------------------
 app.get('/appLogin_cancelTest', async (req, res) => {
     res.render('appLogin.ejs', calcConfigs(`https://d69h4tzaewska.cloudfront.net/static/next.html?token=${req.query.token}`));
 });
+app.get('/appLogin_sameDomain', async (req, res) => {
+    res.render('appLogin.ejs', calcConfigs(`https://d69h4tzaewska.cloudfront.net/static/next.html?token=${req.query.token}`));
+});
 
-function calcConfigs(url) {
-    const payload = createPayload(url);
+function calcConfigs(url, cancelUrl) {
+    const payload = createPayload(url, cancelUrl);
     const signature = apClient.generateButtonSignature(payload);
     return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId};
 }
 
-function createPayload(url) {
-    return {
+function createPayload(url, cancelUrl) {
+    let payload = {
         webCheckoutDetails: {
             checkoutReviewReturnUrl: url
         },
         storeId: keyinfo.storeId
     };
+    if(cancelUrl) {
+        payload.webCheckoutDetails.checkoutCancelUrl = cancelUrl;
+    }
+    return payload;
 }
 
 //-------------------------

@@ -51,22 +51,28 @@ app.get('/sample/cart', async (req, res) => {
 // App Login Screen
 //-------------------
 app.get('/appLogin', async (req, res) => {
-    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`));
+    res.render('appLogin.ejs', calcConfigs(
+        `https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`,
+        `https://${req.headers.host}/static/cancel.html`));
 });
 
-function calcConfigs(url) {
-    const payload = createPayload(url);
+function calcConfigs(url, cancelUrl) {
+    const payload = createPayload(url, cancelUrl);
     const signature = apClient.generateButtonSignature(payload);
     return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId};
 }
 
-function createPayload(url) {
-    return {
+function createPayload(url, cancelUrl) {
+    let payload = {
         webCheckoutDetails: {
             checkoutReviewReturnUrl: url
         },
         storeId: keyinfo.storeId
     };
+    if(cancelUrl) {
+        payload.webCheckoutDetails.checkoutCancelUrl = cancelUrl;
+    }
+    return payload;
 }
 
 //-------------------------

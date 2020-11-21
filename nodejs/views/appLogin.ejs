@@ -7,9 +7,6 @@
     <meta name="author" content="">
     <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0">
     <meta name="google" content="notranslate" />
-
-    <!-- ※ Chrome85+で、住所・支払方法選択画面のキャンセルリンクで、正しく戻るようにするための指定 -->
-    <meta name="referrer" content="no-referrer-when-downgrade">
 </head>
 
 <body data-gr-c-s-loaded="true">
@@ -17,10 +14,6 @@
 
 <script src="https://static-fe.payments-amazon.com/checkout.js"></script>
 <script type="text/javascript" charset="utf-8">
-
-    // 住所・支払方法選択画面のキャンセルリンクをクリックするとこの画面のURLに戻ろうとにするため、Secure WebViewを閉じる指示と差し替える
-    history.replaceState(history.state, document.title, location.href.replace(/appLogin.+$/, 'static/cancel.html'));
-
     amazon.Pay.initCheckout({
         merchantId: '<%= merchantId %>',
         ledgerCurrency: 'JPY', // Amazon Pay account ledger currency

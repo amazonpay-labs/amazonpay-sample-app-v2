@@ -52,7 +52,8 @@ app.get('/sample/cart', async (req, res) => {
 //-------------------
 app.get('/appLogin', async (req, res) => {
     res.render('appLogin.ejs', calcConfigs(
-        `https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`,
+//        `https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`//,
+        `https://${req.headers.host}/sample/redirect?client=${req.query.client}&token=${req.query.token}`,
         `https://${req.headers.host}/static/cancel.html`));
 });
 
@@ -75,6 +76,14 @@ function createPayload(url, cancelUrl) {
     return payload;
 }
 
+//-------------------------
+// Redirect
+//-------------------------
+app.get('/sample/redirect', async (req, res) => {
+    console.log("Redirecting...");
+    res.redirect(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}&amazonCheckoutSessionId=${req.query.amazonCheckoutSessionId}`);
+});
+    
 //-------------------------
 // Checkout Review Screen
 //-------------------------

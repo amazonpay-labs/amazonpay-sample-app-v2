@@ -44,9 +44,7 @@ app.use('/static', express.static('static'));
 // Cart Screen
 //-------------------
 app.get('/sample/cart', async (req, res) => {
-    res.render('sample/cart.ejs', calcConfigs(
-        "https://localhost:3443/sample/checkoutReview",
-        "https://localhost:3443/static/cancel.html"));
+    res.render('sample/cart.ejs', calcConfigs("https://localhost:3443/sample/checkoutReview"));
 });
 
 //-------------------
@@ -66,28 +64,16 @@ function calcConfigs(url, cancelUrl) {
 
 function createPayload(url, cancelUrl) {
     let payload = {
-        signInReturnUrl: url,
-        signInScopes: ["name", "email" , "postalCode"],
+        webCheckoutDetails: {
+            checkoutReviewReturnUrl: url
+        },
         storeId: keyinfo.storeId
     };
     if(cancelUrl) {
-        payload.signInCancelUrl = cancelUrl;
+        payload.webCheckoutDetails.checkoutCancelUrl = cancelUrl;
     }
     return payload;
 }
-
-// function createPayload(url, cancelUrl) {
-//     let payload = {
-//         webCheckoutDetails: {
-//             checkoutReviewReturnUrl: url
-//         },
-//         storeId: keyinfo.storeId
-//     };
-//     if(cancelUrl) {
-//         payload.webCheckoutDetails.checkoutCancelUrl = cancelUrl;
-//     }
-//     return payload;
-// }
 
 //-------------------------
 // Checkout Review Screen

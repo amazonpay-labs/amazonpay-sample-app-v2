@@ -19,9 +19,9 @@
         ledgerCurrency: 'JPY', // Amazon Pay account ledger currency
         sandbox: true, // dev environment
         checkoutLanguage: 'ja_JP', // render language
-        productType: 'SignIn', // checkout type
+        productType: 'PayAndShip', // checkout type
         placement: 'Cart', // button placement
-        signInConfig: {
+        createCheckoutSessionConfig: {
             payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (※ HTML Escapeをしないで出力する)
             signature: '<%= signature %>', // signature generated in step 3
             publicKeyId: '<%= publicKeyId %>' 

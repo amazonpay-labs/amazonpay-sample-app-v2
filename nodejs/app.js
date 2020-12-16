@@ -44,7 +44,9 @@ app.use('/static', express.static('static'));
 // Cart Screen
 //-------------------
 app.get('/sample/cart', async (req, res) => {
-    res.render('sample/cart.ejs', calcConfigs("https://localhost:3443/sample/checkoutReview"));
+    res.render('sample/cart.ejs', calcConfigs(
+        "https://localhost:3443/sample/checkoutReview",
+        "https://localhost:3443/static/cancel.html"));
 });
 
 //-------------------
@@ -64,16 +66,28 @@ function calcConfigs(url, cancelUrl) {
 
 function createPayload(url, cancelUrl) {
     let payload = {
-        webCheckoutDetails: {
-            checkoutReviewReturnUrl: url
-        },
+        signInReturnUrl: url,
+        signInScopes: ["name", "email" , "postalCode"],
         storeId: keyinfo.storeId
     };
     if(cancelUrl) {
-        payload.webCheckoutDetails.checkoutCancelUrl = cancelUrl;
+        payload.signInCancelUrl = cancelUrl;
     }
     return payload;
 }
+
+// function createPayload(url, cancelUrl) {
+//     let payload = {
+//         webCheckoutDetails: {
+//             checkoutReviewReturnUrl: url
+//         },
+//         storeId: keyinfo.storeId
+//     };
+//     if(cancelUrl) {
+//         payload.webCheckoutDetails.checkoutCancelUrl = cancelUrl;
+//     }
+//     return payload;
+// }
 
 //-------------------------
 // Checkout Review Screen

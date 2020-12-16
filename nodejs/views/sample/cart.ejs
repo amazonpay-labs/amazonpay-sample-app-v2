@@ -105,13 +105,13 @@
             ledgerCurrency: 'JPY', // Amazon Pay account ledger currency
             sandbox: true, // dev environment
             checkoutLanguage: 'ja_JP', // render language
-            productType: 'PayAndShip', // checkout type
+            productType: 'SignIn', // checkout type
             placement: 'Cart', // button placement
             buttonColor: 'Gold',
-            createCheckoutSessionConfig: {
+            signInConfig: {
                 payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2
                 signature: '<%= signature %>', // signature generated in step 3
-                publicKeyId: '<%= publicKeyId %>' 
+                publicKeyId: '<%= publicKeyId %>',
             }
         });
     } else {

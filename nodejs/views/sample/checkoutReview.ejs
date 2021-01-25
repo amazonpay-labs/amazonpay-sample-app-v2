@@ -169,7 +169,11 @@
 
 </div>
 
+<script type="text/javascript" src="https://static-fe.payments-amazon.com/checkout.js"></script>
 <script type="text/javascript" charset="utf-8">
+    //-------------
+    // 購入ボタン
+    //-------------
     document.getElementById("purchaseButton").addEventListener('click', (e) => {
         $.ajax({
             type: 'POST',
@@ -199,29 +203,40 @@
         );
     });
 
-    // 送付先の編集 
-    document.getElementById("changeButton1").addEventListener('click', (e) => {
-        if(window.androidApp) {
+    //-------------------------
+    // 住所・支払方法変更ボタン
+    //-------------------------
+    if(window.androidApp) {
+        // Android App
+        document.getElementById("changeButton1").addEventListener('click', (e) => {
             coverScreen();
             androidApp.login();
-        } else if(window.webkit && webkit.messageHandlers && webkit.messageHandlers.iosApp) {
-            coverScreen();
-            webkit.messageHandlers.iosApp.postMessage({op: 'login'});            
-        } else {
-        }
-    });
-
-    // 支払方法の編集
-    document.getElementById("changeButton2").addEventListener('click', (e) => {
-        if(window.androidApp) {
+        });
+        document.getElementById("changeButton2").addEventListener('click', (e) => {
             coverScreen();
             androidApp.login();
-        } else if(window.webkit && webkit.messageHandlers && webkit.messageHandlers.iosApp) {
+        });
+    } else if (window.webkit && webkit.messageHandlers && webkit.messageHandlers.iosApp) {
+        // iOS App
+        document.getElementById("changeButton1").addEventListener('click', (e) => {
             coverScreen();
             webkit.messageHandlers.iosApp.postMessage({op: 'login'});            
-        } else {
-        }
-    });
+        });
+        document.getElementById("changeButton2").addEventListener('click', (e) => {
+            coverScreen();
+            webkit.messageHandlers.iosApp.postMessage({op: 'login'});            
+        });
+    } else {
+        // Browser
+        amazon.Pay.bindChangeAction('#changeButton1', {
+            amazonCheckoutSessionId: '<%= checkoutSession.checkoutSessionId %>',
+            changeAction: 'changeAddress'
+        });
+        amazon.Pay.bindChangeAction('#changeButton2', {
+            amazonCheckoutSessionId: '<%= checkoutSession.checkoutSessionId %>',
+            changeAction: 'changePayment'
+        });
+    }
 
     function loadUrl(url) {
         location.href = url;

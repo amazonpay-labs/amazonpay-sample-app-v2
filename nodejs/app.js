@@ -44,35 +44,55 @@ app.use('/static', express.static('static'));
 // Cart Screen
 //-------------------
 app.get('/sample/cart', async (req, res) => {
-    res.render('sample/cart.ejs', calcConfigs("https://localhost:3443/sample/checkoutReview"));
+    res.render (
+        'sample/cart.ejs', 
+        newConfig (
+            newPayload ("https://localhost:3443/sample/checkoutReview")
+        )
+    );
 });
 
 //-------------------
 // App Login Screen
 //-------------------
 app.get('/appLogin', async (req, res) => {
-    res.render('appLogin.ejs', calcConfigs(
-        `https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`,
-        `https://${req.headers.host}/static/cancel.html`));
+    res.render (
+        'appLogin.ejs', 
+        newConfig (
+            newFullPayload (
+                `https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`,
+                `https://${req.headers.host}/static/cancel.html`
+            )
+        )
+    );
 });
 
-function calcConfigs(url, cancelUrl) {
-    const payload = createPayload(url, cancelUrl);
-    const signature = apClient.generateButtonSignature(payload);
-    return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId};
+function newConfig(payload) {
+    return {
+        payload: payload, 
+        signature: apClient.generateButtonSignature(payload), 
+        merchantId: keyinfo.merchantId, 
+        publicKeyId: keyinfo.publicKeyId
+    };
 }
 
-function createPayload(url, cancelUrl) {
-    let payload = {
+function newPayload(url) {
+    return {
         webCheckoutDetails: {
             checkoutReviewReturnUrl: url
         },
         storeId: keyinfo.storeId
     };
-    if(cancelUrl) {
-        payload.webCheckoutDetails.checkoutCancelUrl = cancelUrl;
-    }
-    return payload;
+}
+
+function newFullPayload(url, cancelUrl) {
+    return {
+        webCheckoutDetails: {
+            checkoutReviewReturnUrl: url,
+            checkoutCancelUrl: cancelUrl
+        },
+        storeId: keyinfo.storeId
+    };
 }
 
 //-------------------------

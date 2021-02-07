@@ -1,4 +1,4 @@
-# 本サンプルアプリについて
+# About this sample application
 SmartPhone上でAmazon Payを使って商品を購入する、モバイルアプリのサンプル実装です。  
 本サンプルアプリでは、Amazon Payの処理についてはモバイルアプリから使えるSecureなブラウザ技術である、  
   * Android: Chrome Custom Tabs  
@@ -41,47 +41,46 @@ iOS バージョン11.2以降: Safari Mobile 11以降
 本サンプルアプリはWebViewで作成されておりますが、図を見ると分かる通り必ず一度Nativeの処理を経由してからSecure WebViewとやり取りをしています。
 よってNativeアプリの場合でも、本サンプルアプリを参考にAmazon Payをご実装いただくことが可能です。  
 
-# Amazon Payを実装するために必要なタスクの概要
-## [参考] PC・MobileのBrowser版への実装で必要なタスク
-Amazon PayをPC・MobileのBrowserに実装した場合、一般的には下記のようなFlowになります。  
+# Abstractions of tasks to integrate Amazon Pay with your mobile app
+## [Reference] Tasks to integrate Amazon Pay with web system(running on normal browser)
+Genally speaking, the flow is like below:
 
 ![](nodejs/docimg/browser-flow.png)  
 
-必要なタスクは、下記の通りです。  
+And the tasks are like below:
 
-1. カートページや商品ページにAmazon Payボタンを配置します。
-    - この時、②でリダイレクトされる、購入ページのURLを設定します。
-2. ②のリダイレクト時のURLに「amazonCheckoutSessionId」が渡されます。
-    - Server側で「amazonCheckoutSessionId」をパラメタにAmazon Pay APIを呼び出し、購入者の氏名・住所情報を取得して購入ページに反映して表示します。
-3. 購入ボタンクリック時に下記の処理を行います。
-    - Server側で「amazonCheckoutSessionId」をパラメタにAmazon Pay APIを呼び出し、金額などの決済に必要な情報と、④のリダイレクト先のThanksページのURLを設定します。
-    - このAPIの戻り値の中に③の「支払い処理ページ」へのURLが含まれているので、そちらにリダイレクトします。
-4. Amazon側の画面にて与信などの決済処理が完了すると自動的に④のリダイレクトが発生します。
-    - Server側で「amazonCheckoutSessionId」をパラメタにAmazon Pay APIを呼び出してAmazon Payの支払いSessionを完了させて、Thanksページを表示します。
+1. Place the amazon pay button on the cart page, item page, etc
+    - At the time, you should specify the URL of the review page which is fired at ②.
+2. 'amazonCheckoutSessionId' is to be passed as a URL parameter of redirection URL at ②
+    - At the server side, you should call Amazon Pay API to obtain the name and address info of the buyer, and refrect them onto the review page and display it.
+3. When 'purchase' button on the review page is tapped, you should do following
+    - At the server side, you should call Amazon Pay API with the parameter, 'amazonCheckoutSessionId', and update the purchase information such as price, and define the redirect URL of thanks page, which will be fired at ④.
+    - The response of this API call contains the URL of the purchase processing page, you should redirect to it.
+4. When the process of purchase processing page ends, the redirection of ④ is fired automatically.
+    - At the server side, you should call Amazon Pay API with the parameter, 'amazonCheckoutSessionId' to complete the purchase session with Amazon Pay, then display the thanks page.
 
-## モバイルアプリ版への実装で必要なタスク
-Amazon Payをモバイルアプリに実装する場合も、基本的なFlowは同じで、一般的には下記のようになります。  
+## Tasks to integrate Amazon Pay with your mobile app
+The basic flow of mobile app is same as above.  
 
 ![](nodejs/docimg/app-flow.png)  
 
-必要なタスクも基本的にはBrowserと多くは共通ですが、Amazon側の処理をSecure WebView上で実行しなくてはいけないため、一部追加のタスクもあります。  
-Browserと違う部分に関しては、***太字***で表記します。  
+Most of the tasks you have to do is same as well, but some extra tasks are required sicne you have to perform Amazon pay specific process on Secure WebView.  
+The different points are indicated by ***bold letters*** below:
 
-### WebViewアプリの場合
-下記のとおり、多くの部分がBrowserと共通になります。
+### In case of WebView application
 
-1. カートページや商品ページに ***「Amazon Payボタン」の画像*** を配置します。
-    - ***この画像をタップした時、「自動的にAmazonログイン画面に遷移させるページ」([android](android/README.md)、[ios](ios/README.md)にて後述)をSecure WebViewで表示します。***
-    - この時、②でリダイレクトされる、***Nativeコードを起動するURL(iOS: Universal Links, Android: Applinks)*** を設定します。
-2. ②のリダイレクト時のURLに「amazonCheckoutSessionId」が渡されます。
-    - ***Nativeコードが起動するので、URLに含まれる「amazonCheckoutSessionId」を取得し、これを付与してWebViewを購入ページにリダイレクトさせます***
-    - Server側で「amazonCheckoutSessionId」をパラメタにAmazon Pay APIを呼び出し、購入者の氏名・住所情報を取得して購入ページに反映して表示します。
-3. 購入ボタンクリック時に下記の処理を行います。
-    - Server側で「amazonCheckoutSessionId」をパラメタにAmazon Pay APIを呼び出し、金額などの決済に必要な情報と、④のリダイレクト先の ***Nativeコードを起動する「中継用のページ」([android](android/README.md)、[ios](ios/README.md)にて後述)*** のURLを設定します。
-    - このAPIの戻り値の中に③の「支払い処理ページ」へのURLが含まれているので、***Secure WebViewで表示します***。
-4. Amazon側の画面にて与信などの決済処理が完了すると自動的に④のリダイレクトが発生します。
-    - ***中継用ページによりNativeコードが起動するので、WebViewをThanksページにリダイレクトさせます***。
-    - Server側で「amazonCheckoutSessionId」をパラメタにAmazon Pay APIを呼び出してAmazon Payの支払いSessionを完了させて、Thanksページを表示します。
+1. Place the amazon pay button ***image*** on the cart page, item page, etc
+    - ***When a buyer clicks the image, you should invoke Secure WebView to open the page which goes to Amazon Pay login screen automatically (detail explanation is coming later on [android](android/README.md) and [ios](ios/README.md)***
+    - At the time, you should specify the URL, ***which invokes native code(iOS: Universal Links, Android: Applinks)***, which is fired at ②.
+2. 'amazonCheckoutSessionId' is to be passed as a URL parameter of redirection URL at ②
+    - ***Native code is invoked, obtains 'amazonCheckoutSessionId' in the redirection URL, make WebView redirect to the review page with the amazonCheckoutSessionId***
+    - At the server side, you should call Amazon Pay API to obtain the name and address info of the buyer, and refrect them onto the review page and display it.
+3. When 'purchase' button on the review page is tapped, you should do following
+    - At the server side, you should call Amazon Pay API with the parameter, 'amazonCheckoutSessionId', and update the purchase information such as price, and define the redirect URL of the page ***invoking native code(detail explanation is coming later on [android](android/README.md) and [ios](ios/README.md)***, which will be fired at ④.
+    - The response of this API call contains the URL of the purchase processing page, you should ***invoke Secure WebView and open the URL***.
+4. When the process of purchase processing page ends, the redirection of ④ is fired automatically.
+    - ***Native code is invoked, make WebView redirect to thanks page***.
+    - At the server side, you should call Amazon Pay API with the parameter, 'amazonCheckoutSessionId' to complete the purchase session with Amazon Pay, then display the thanks page.
 
 ### Nativeアプリの場合
 下記のとおり、多くの部分がBrowserと共通となります。  

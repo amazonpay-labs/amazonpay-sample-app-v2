@@ -1,125 +1,125 @@
-# インストール方法
+# Installation instructions
 
-## 注意事項 1
-先にWebアプリケーション側にあたる、[nodejs](../nodejs/README.md)側をインストールして下さい。
+## Notes 1
+First, install the [nodejs](. /nodejs/README.md) side first.
 
-## 注意事項 2
-本サンプルアプリのAndroid版は、下記の条件を満たす場所にこの後の手順で生成する設定ファイルを配置する必要あるため、条件を満たすサーバーかクラウドサービスのアカウントを保有していないと正しく動かせません。  
-  * httpsでファイルにアクセスできること(自己証明書ではなく、Android OSが認識できる正しい証明書を使っていること)  
-  * ファイル取得時のContent-Typeは「application/json」とすること  
-  * ファイルは「ドメインのルート/.well-known/」の下に配置すること  
+## Notes 2
+The Android version of this sample application requires the configuration file generated in the following steps to be placed in a location that satisfies the following conditions, so it will not run properly unless you have a server or cloud service account that satisfies the conditions.  
+  * The file must be accessible via https (using a valid certificate recognized by the Android OS, not a self-certificate).  
+  * The Content-Type of the file must be "application/json".  
+  * The file should be placed under "domain root/.well-known/".  
 
-本サンプルアプリではこの目的で、[Amazon S3](https://aws.amazon.com/jp/s3/)を利用しています。こちらはアカウントをInternet上で簡単に取得でき、世界中で広く使われており、利用方法などの情報も多く、12ヶ月間 5GBの無料利用枠もあるため、お勧めです。
+In this sample application, we use [Amazon S3](https://aws.amazon.com/jp/s3/) for this purpose. We recommend this service because it is easy to get an account on the Internet, it is widely used around the world, there is a lot of information on how to use it, and there is a free usage limit of 5GB for 12 months.
 
-こちらがすぐに準備できない場合は、iOS版も動作はほとんど同じであり、上記がなくても本サンプルを動作させることが可能なので、そちらを先に試すことをお勧めします。  
+If you are not able to prepare it immediately, we recommend you to try the iOS version first, as it works almost the same and you can run this sample without the above.  
 
-## プロジェクトのOpenとサンプルアプリの起動
-本プロジェクトは、[Android Studio(無料)](https://developer.android.com/studio/)で開きます。そのほかのIDEでも開くことはできますが、ここでは上記のIDEでの開き方を説明します。  
-まずはAndroid Studioを立ち上げます。  
-*※ 下記の画面になっていない場合は、Android Studioで開いているプロジェクトを全て閉じてください。*  
-![androidstudio-welcome](docimg/android_welcome.png)
-「Import Project」 → cloneしたプロジェクトを選択 → 「Open」  
-プロジェクトが開いてGradleのbuildが始まりますので、終わるまで数分お待ちください。  
-終了したら、Menuの「Run」→「Run app」か、画面上部の「Run app」ボタンより、applicationを起動してください。
-![androidstudio-project](docimg/android_project.png)
-下記のようなapplicationを実行するAndroidデバイス or Virtual Device(Emulatorで起動される、仮想的なAndroidデバイス)を選択する画面が開きます。今回はEmulatorでの起動方法を説明します。  
-「Create New Virtual Device」をクリックします。  
-![androidstudio-select-emu](docimg/android_select_emu.png)
-今回のサンプルはAPI Level 24 以上で動作しますので、該当するVersionのVirtual Deviceがあればそちらを選択します。
-そうでなければ、ここで「Create New Virtual Device」をクリックして、Virtual Deviceを作成します。  
-![androidstudio-select-hard](docimg/android_select_hard.png)
-左側の「Category」で「Phone」を選択し、開発に用いたい端末を選択します。  
-*※特にこだわりがなければ、デフォルトで選択されているもので構いません。*  
-「Next」をクリックします。
-![androidstudio-select-version](docimg/android_select_ver.png)
-API Level 24 より上のバージョンより好きなものをを選んで、「Next」。  
-*※まだDownloadされていない場合には、「Download」より、画面の指示に従ってDownloadしてください。*
-![androidstudio-select-finish](docimg/android_select_fin.png)
-「Finish」でVirtual Deviceの生成が開始されますので、数分お待ちください。  
-生成が完了すると、生成されたVirtual Deviceが選択できるようになるので、こちらを選択して「OK」。
-![androidstudio-select-emu](docimg/android_select_emu.png)
-Emulatorが立ち上がり、サンプルアプリが起動します。(1〜2分かかります。)  
+## Open the project and launch the sample app
+This project can be opened with [Android Studio (free)](https://developer.android.com/studio/). You can also open it with other IDEs, but here we will explain how to open it with the above IDE.  
+First, launch Android Studio.  
+*If you do not see the following screen, please close all the projects that are open in Android Studio. *  
+! [androidstudio-welcome](docimg/android_welcome.png)
+Import Project" → select the project you cloned → "Open".  
+The project will open and the Gradle build will start, please wait a few minutes until it finishes.  
+When it is finished, start the application by clicking "Run" → "Run app" in the menu or the "Run app" button at the top of the screen.
+! [androidstudio-project](docimg/android_project.png)
+The following screen will open to select the Android device or Virtual Device (a virtual Android device that will be launched by the Emulator) to run the application. In this tutorial, we will explain how to run the application on the Emulator.  
+Click "Create New Virtual Device".  
+Click "Create New Virtual Device. [androidstudio-select-emu](docimg/android_select_emu.png)
+This sample will work with API Level 24 or higher, so if there is a Virtual Device with the appropriate version, select that one.
+If not, click on "Create New Virtual Device" to create a Virtual Device.  
+! [androidstudio-select-hard](docimg/android_select_hard.png)
+Select "Phone" in "Category" on the left and select the device you want to use for development.  
+*If you are not particular about it, you can use the default selection. *  
+Click "Next".
+! [androidstudio-select-version](docimg/android_select_ver.png)
+Select the version you like from API Level 24 and above, and click "Next".  
+*If you have not downloaded the file yet, click "Download" and follow the instructions on the screen to download the file. *!
+! [androidstudio-select-finish](docimg/android_select_fin.png)
+After "Finish", the Virtual Device will start to be generated.  
+After the generation is complete, you will be able to select the generated Virtual Device, so select this one and click "OK".
+! [androidstudio-select-emu](docimg/android_select_emu.png)
+The Emulator will start up and the sample application will run. (This will take a minute or two.)  
 <img src="docimg/emu_start.png" width="300">
 
-## 自己証明書のインストール
-今回のサンプルでは、server側のSSL証明書に自己証明書が使用されているため、サンプルアプリを正しく動作させるためにはその自己証明書をAndroid側にInstallする必要があります。  
-ここでは、Emulatorで起動したVirtual DeviceへのInstall方法を説明します。
+## Install the self-certificate
+In this sample, a self-certificate is used as the SSL certificate on the server side, so the self-certificate must be installed on the Android side in order for the sample application to work properly.  
+In this section, we will explain how to install the self-certificate on the Virtual Device started by the Emulator. 1.
 
-1. PIN lockの設定  
-Androidではセキュリティのため、PINを設定しないとSSL証明書をInstallできません。  
-設定画面を開き、セキュリティの設定より「画面のロック(Screen lock)」よりPINを設定してください。  
-*※設定画面の開き方や各種設定は、端末やOSのバージョンによっても変わりますので、もし分からなければGoogleなどで検索してお調べください。  
-参考までに、代表的な設定画面の開き方としては、アプリ一覧アイコンをクリックして選択する、ホーム画面で下からスワイプしてアプリ一覧を出して選択する、などがあります。*  
-<img src="docimg/emu_pin.png" width="300">  
+Setting PIN lock  
+For security reasons, the SSL certificate cannot be installed on Android without setting a PIN.  
+To do this, open the settings screen and select "Screen lock" from the security settings to set the PIN.  
+*How to open the settings screen and the various settings will vary depending on the device and OS version, so if you are not sure, please search on Google or other search engines.  
+For reference, typical ways to open the settings screen include clicking on the app list icon and selecting it, or swiping from the bottom of the home screen to bring up the app list and selecting it. *  
+<img src="docimg/emu_pin.png" width="300"> 2.  
 
-2. SSL自己証明書のDownload & Install  
-Chromeを立ち上げ、下記のURLにアクセスします。  
+Download & Install the SSL self-certificate  
+Launch Chrome and access the following URL  
 https://10.0.2.2:3443/static/crt/sample.crt  
-下記のように警告が出るので、「ADVANCED」→「PROCEED TO 10.0.2.2(UNSAFE)」  
+When you get the warning as below, click "ADVANCED" -> "PROCEED TO 10.0.2.2(UNSAFE)  
 <img src="docimg/emu_warn.png" width="300">  
-「CONTINUE」  
-<img src="docimg/emu_accept-download.png" width="300">  
-「ALLOW」  
-<img src="docimg/emu_allow-chrome.png" width="300">  
-「DOWNLOAD」  
+"CONTINUE  
+<img src="docimg/emu_accept-download.png" width="300"> "CONTINUE  
+ALLOW.  
+<img src="docimg/emu_allow-chrome.png" width="300"> "DOWNLOAD  
+DOWNLOAD.  
 <img src="docimg/emu_download-crt.png" width="300">  
-PINを聞かれるので、先ほど設定した値を入力します。  
-表示された証明書Install画面にて、名前の欄に適当な名前を入力し、「VPN and apps」が選択されていることを確認して、「OK」をクリックすればインストール完了です。  
+You will be asked for your PIN, enter the value you just set.  
+On the Install Certificate screen that appears, enter a suitable name in the Name field, make sure "VPN and apps" is selected, and click "OK" to complete the installation.  
 <img src="docimg/emu_install.png" width="300">  
 
-## Applinksの設定
-本サンプルアプリでは、Applinksという技術を利用してSecure WebView → Nativeアプリの起動を行っています。  
-Applinksを使うためには、専用の設定ファイル(assetlinks.json)を生成して下記条件の場所に配置する必要があります。
-  * httpsでファイルにアクセスできること(自己証明書ではなく、iOSが認識できる正しい証明書を使っていること)  
-  * ファイル取得時のContent-Typeは「application/json」とすること  
-  * ファイルは「ドメインのルート/.well-known/」の下に配置すること  
+## Setting up Applinks
+In this sample application, we use a technology called Applinks to launch Secure WebView → Native application.  
+To use Applinks, you need to generate a special configuration file (assetlinks.json) and place it in the following condition.
+  * The file must be accessible via https (using a correct certificate that iOS can recognize, not a self-certificate).  
+  * Content-Type must be "application/json" when retrieving the file.  
+  * The file must be placed under "domain root/.well-known/".  
 
-上記については準備ができているものとし、設定ファイルの生成方法と配置方法を説明します。  
+Assuming that the above is ready, we will now explain how to generate and deploy the configuration file.  
 
-### 設定ファイルの生成
-「Tool」→「App Links Assistant」を起動します。  
-![androidstudio-welcome](docimg/applinks-1.png)
+### Generating the configuration file
+Start "Tool" -> "App Links Assistant".  
+! [androidstudio-welcome](docimg/applinks-1.png)
 
-起動したApp Links Assistantの①の、「Open URL Mapping Editor」をクリックします。  
-![androidstudio-welcome](docimg/applinks-2.png)
+Click "Open URL Mapping Editor" in ① of the launched App Links Assistant.  
+Click ! [androidstudio-welcome](docimg/applinks-2.png)
 
-「URL Mapping」の表に一つ登録されていますので、こちらをダブルクリックします。  
-![androidstudio-welcome](docimg/applinks-show-existing.png)
+One of the URLs is registered in the "URL Mapping" table, so double-click this one.  
+! [androidstudio-welcome](docimg/applinks-show-existing.png)
 
-Hostの「amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com」の部分を、準備したサーバーのドメインに書き換えて「OK」をクリックします。  
-![androidstudio-welcome](docimg/applinks-update-host.png)
+Replace the "amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com" part of Host with the domain of the server you prepared, and click "OK".  
+! [androidstudio-welcome](docimg/applinks-update-host.png)
 
-次に③の、「Open Digital Asset Links File Generator」をクリックすると下記が開くので、「Generate Digital Asset Links file」をクリックします。  
-![androidstudio-welcome](docimg/applinks-10.png)
+Next, click on (3), "Open Digital Asset Links File Generator" to open the following, and then click on "Generate Digital Asset Links file".  
+Click "Generate Digital Asset Links file". [androidstudio-welcome](docimg/applinks-10.png)
 
-「Save File」ボタンが出てきますので、こちらをクリックすると生成された定義ファイルの「assetlinks.json」を任意のFolderに保存できます。  
-![androidstudio-welcome](docimg/applinks-11.png)
+Click on the "Save File" button to save the generated definition file "assetlinks.json" to any folder.  
+Click on the ! [androidstudio-welcome](docimg/applinks-11.png)
 
-### 設定ファイルの配置と検証
-用意したサーバーのDomainルートに、「.well-known」という名前のディレクトリを作成し、定義ファイル「assetlinks.json」を配置します。  
-※ Content-Typeが「application/json」になるよう、設定する必要があります。  
+### Deploy and verify the configuration files
+Create a directory named ".well-known" in the Domain root of the server you prepared, and place the definition file "assetlinks.json" there.  
+It is necessary to set the Content-Type to "application/json".  
 
-④の「Test App Links」をクリックすると、Emulator上で検証できます。  
-下記ダイアログが開くので、「Run Test」ボタンをクリックします。  
-![androidstudio-welcome](docimg/applinks-13.png)
+Click "Test App Links" in ④ to verify on the Emulator.  
+Click the "Run Test" button when the following dialog box opens.  
+! [androidstudio-welcome](docimg/applinks-13.png)
 
-Emulator上での検証がOKなら、下記のように検証OKのメッセージが出力されます。
-![androidstudio-welcome](docimg/applinks-14.png)
+If the verification on the Emulator is OK, the verification OK message will be output as shown below.
+! [androidstudio-welcome](docimg/applinks-14.png)
 
-「../nodejs/app.js」を開いて、「App Login Screen」を下記のように書き直します。  
-「[YOUR-SERVER-DOMAIN]」には上記サーバーのドメインを入れます。  
+... Open "/nodejs/app.js" and rewrite "App Login Screen" as shown below.  
+Put the domain of the server above in "[YOUR-SERVER-DOMAIN]".  
 
 ```js
 //-------------------
-// App Login Screen
+//App Login Screen
 //-------------------
 app.get('/appLogin', async (req, res) => {
     if(req.query.client === 'androidApp') {
-        res.render('appLogin.ejs', calcConfigs(`https://[YOUR-SERVER-DOMAIN]/redirector_local-${req.query.client}.html?token=${req.query.token}`));
+        res.render('appLogin.ejs', calcConfigs(`https://[YOUR-SERVER-DOMAIN]/redirector_local-${req.query.client}.html?token=${req.query. token}`));
     } else {
-        res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`));
+        res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query. client}.html?token=${req.query.token}`));
     }
 });
-```
+```.
 
-あとはnodejsを再起動して、Emulator上でサンプルアプリを立ち上げて動作をご確認ください。
+Now, please restart nodejs and launch the sample application on Emulator to see how it works.

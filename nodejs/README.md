@@ -51,6 +51,6 @@ node app.js
 
 ### Test in browser
 Go to [https://localhost:3443/sample/cart](https://localhost:3443/sample/cart). If you ignore the security warning and proceed, you will see the following screen.
-! [](docimg/browser.png)
+![](docimg/browser.png)
 
 This sample application will also work in a browser on PC/Mobile, so please use it to check the operation of the application and understand its behavior.

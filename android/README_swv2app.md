@@ -19,33 +19,33 @@ As long as the Server is not cracked, the mapping between the URL and the mobile
 A tool for generating JSON files for mapping between URLs and apps is available, so I will explain how to generate a new JSON file for mapping using that tool.  
 
 Launch "Tool" -> "App Links Assistant".
-! [androidstudio-welcome](docimg/applinks-1.png)
+![androidstudio-welcome](docimg/applinks-1.png)
 
 Click "Open URL Mapping Editor" in ① of the launched App Links Assistant.  
-Click ! [androidstudio-welcome](docimg/applinks-2.png)
+![androidstudio-welcome](docimg/applinks-2.png)
 
 Click "+" to add a new mapping.  
-! [androidstudio-welcome](docimg/applinks-3.png)
+![androidstudio-welcome](docimg/applinks-3.png)
 
 In the "Host" field, select "https://{domain of your own server where you want to place the definition file}", and in the "Activity" field, select the Activity you want to launch with your mapping.  
 In the "Host" field, select "{Server domain you manage to place the definition file}", and in the "Activity" field, select the Activity you want to map and launch. You can manage multiple Activities and URL Mappings in one definition file by specifying "Path", but we will not explain it here.  
 [androidstudio-www [androidstudio-welcome](docimg/applinks-4.png)
 
 OK" will add the following intent-filter to AndroidManifest.xml.  
-! [androidstudio-welcome](docimg/applinks-5.png)
+![androidstudio-welcome](docimg/applinks-5.png)
 
 Manually add the attribute "android:autoVerify="true"" as shown below so that Mapping will be automatically updated by Android when the app is installed or updated.  
-! [androidstudio-welcome](docimg/applinks-6.png)
+![androidstudio-welcome](docimg/applinks-6.png)
 
 Next, click "Select Activity" in ②. Click "Insert Code" to add logic to the selected Activity to receive the startup process from Applinks.  
 Click "Insert Code. [androidstudio-welcome](docimg/applinks-8.png)
-! [androidstudio-welcome](docimg/applinks-9.png)
+![androidstudio-welcome](docimg/applinks-9.png)
 
 Next, click on (3), "Open Digital Asset Links File Generator" to open the following window, set the appropriate values for your environment and click "Generate Digital Asset Links file".  
 Click "Generate Digital Asset Links file". [androidstudio-welcome](docimg/applinks-10.png)
 
 Click on the "Save File" button to save the generated definition file "assetlinks.json" to a folder of your choice.  
-Click on the ! [androidstudio-welcome](docimg/applinks-11.png)
+Click on the ![androidstudio-welcome](docimg/applinks-11.png)
 
 Place the definition file "assetlinks.json" in the Server.  
 The points to note at this point are.  
@@ -60,14 +60,14 @@ This is relatively easy to do using AWS S3, so please refer to it for reference.
 
 After the definition file has been placed, click on "Link and Verify".  
 If the settings are correct, a verification OK message will be output at the bottom of the dialog as shown below.  
-! [androidstudio-welcome](docimg/applinks-12.png)
+![androidstudio-welcome](docimg/applinks-12.png)
 
 Click "Test App Links" in ④ to verify on the Emulator.  
 The following dialog will open, and click the "Run Test" button.  
-! [androidstudio-welcome](docimg/applinks-13.png)
+![androidstudio-welcome](docimg/applinks-13.png)
 
 If the verification on the Emulator is OK, the verification OK message will be output as shown below.
-! [androidstudio-welcome](docimg/applinks-14.png)
+![androidstudio-welcome](docimg/applinks-14.png)
 
 Now we are ready to call the Native code.  
 All that's left to do is to create a Link with the URL "https://{domain of the server where 'aplinks.json' was placed}"/...". on Chrome Custom Tabs, and the code you added to the Activity you specified during the process should be executed.  

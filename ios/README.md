@@ -420,10 +420,11 @@ When you click the buy button, the following script will be executed.
         })
         .then(
             :
-```
+````
+
 Ajax will call the following Server-side Checkout Session Update API.  
 
-``js
+```js
 // Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-----------------------------
@@ -477,7 +478,7 @@ async function updateCheckoutSession(data) {
         'x-amz-pay-idempotency-key': uuid.v4().toString().replace(/-/g, '')
     });
 }
-```.
+```
 
 Using Amazon Pay's API, we update the checkoutSession with information such as the purchase amount and the order number of the business, which are required for payment, and the URL that will be automatically redirected on the payment processing page (see below).  
 As for the "URL to be automatically redirected on the payment processing page," in the case of Browser, specify the URL of the Thanks page directly, and in the case of iOS and Android, specify the URL to the page for relay (see below).
@@ -520,7 +521,8 @@ When the Ajax Response is returned, the following will be executed.
 
 By checking the existence of the Callback Object passed to the WebView, the client environment is determined and the corresponding process is executed.  
 In this case, since we are on iOS, the following will be executed.
-``js
+
+```js
                         webkit.messageHandlers.iosApp.postMessage({op: 'auth', url: json.webCheckoutDetails.amazonPayRedirectUrl});
 ```
 
@@ -898,7 +900,7 @@ The content of "next.html" is as follows.
         "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" + location.search;
 </script>
 </body>
-````
+```
 
 The URL that triggers Universal Links with the URL parameter specified at the time of access is specified in the "id="nextButton"" link.  
 With this mechanism, if Universal Links is not triggered, this screen will be displayed. By tapping on this "next" link, the user can ensure that the conditions are met and Universal Links are triggered.  
@@ -946,7 +948,8 @@ The following is the process triggered by Universal Links.
         }
         } return true
     }
-````
+```
+
 First, get the URL parameter that was specified in the URL that triggered Universal Links.  
 Next, from the history hierarchy of the Application, get the SFSafariViewController that is displayed at the top at this point, and the ViewController immediately below it.  
 Then, close the SFSafariView (Secure WebView).  
@@ -989,7 +992,8 @@ app.get('/sample/checkoutReview', async (req, res) => {
     // TODO Modify the ↓ part to return data in a format that is easy for the app to receive, such as JSON.
     // res.render('sample/checkoutReview.ejs', order);
 });
-````
+```
+
 It calculates the amount of money by calculating the cart information, and also retrieves the address information from Amazon Pay API and returns it.
 
 ### Processing when a purchase button is clicked
@@ -1050,16 +1054,21 @@ async function updateCheckoutSession(data) {
         'x-amz-pay-idempotency-key': uuid.v4().toString().replace(/-/g, '')
     });
 }
-```.
+```
 
 This "URL to be automatically redirected on the payment processing page" is the URL to the relay page (see below), because the mobile app needs to launch the Native code.  
 The return value from the Amazon Pay API is directly returned as a Response of the Checkout Session Update API in this sample app.  
 The URLs that need to be redirected are as follows.
-```.
+
+
+```
 $.webCheckoutDetails.amazonPayRedirectUrl
-``` $.webCheckoutDetails.amazonPayRedirectUrl
+```
+
+
 
 When the Native app receives this Response, it will execute the following process using the above URL as a parameter.  
+
 
 ```swift
     func invokeAuthorizePage(_ url: String) {
@@ -1067,7 +1076,7 @@ When the Native app receives this Response, it will execute the following proces
         let safariView = SFSafariViewController(url: NSURL(string: url)! as URL)
         present(safariView, animated: true, completion: nil)
     }
-````
+```
 
 With the above, you can open the URL included in the return value of the checkoutSession update process of Amazon Pay API with Secure WebView.  
 

@@ -5,10 +5,10 @@ Install the [nodejs](.../nodejs/README.md) side of the web application first. /n
 This project will be opened in [Xcode](https://developer.apple.com/jp/xcode/) on a Mac. This project will be opened in [Xcode]() on a Mac. We will not discuss how to open it in other environments here.  
 Here, we are using version 10.2.1.  
 First, launch Xcode.  
-! [androidstudio-welcome](docimg/xcode_open.png)
+![androidstudio-welcome](docimg/xcode_open.png)
 Under "Open another project", select this IOS/iOS-App-v2 directory and click "Open".  
 After the project is opened, start the application by clicking "Product" -> "Run" in the menu or the "Run" button at the top of the screen.
-! [androidstudio-project](docimg/xcode_project.png)
+![androidstudio-project](docimg/xcode_project.png)
 The Simulator will start up and the sample application will be launched. (This will take a minute or two.)  
 <img src="docimg/simu_start.png" width="300">
 

@@ -22,7 +22,7 @@ The JSON file for mapping the URL to the app looks like the following.
 {
     "applinks": {
         "apps": [],
-        "details": [], [].
+        "details": [], 
             {
                 "appID": "XXXXXXXXX.com.amazon.pay.sample.iOS-App-v2",
                 "paths":[ "*" ]
@@ -53,7 +53,7 @@ Then add the Associated Domains.
 Open "Signing & Capabilities" in Xcode, and add "Associated Domains" from "+ Capability" in the upper left corner.  
 This operation will automatically register the Bundle Identifier of the app in "Certificates, Identifiers & Profiles" -> "Identifiers" in the Apple Developer Center.  
 
-! [](docimg/xcode_associateddomains.png)  
+![](docimg/xcode_associateddomains.png)  
 
 Register the following two items in Associated Domains as shown in the image above.
   * applinks:{domain of the server where the above "apple-app-site-association" is placed}  
@@ -93,13 +93,13 @@ CustomURLScheme is a mechanism to define a URL scheme for your mobile app to be 
 
 On XCode, click the following "+" in "URL Types" under "info".
 
-! [](docimg/xcode_customurlscheme1.png)  
+![](docimg/xcode_customurlscheme1.png)  
 
 Then the following input form will be displayed.  
 For identifier, enter a string that will be unique within the device.  
 In URL Schemes, enter a value to call your mobile app. It is recommended to specify a string that is long enough to avoid accidental confusion with other mobile apps.
 
-! [](docimg/xcode_customurlscheme2.png)  
+![](docimg/xcode_customurlscheme2.png)  
 
 Now we are ready to call the Native code.  
 Now we need to add the URL "{URL Schemes defined above in XCode}://..." to the SFSafariView. on SFSafariViewController, and the following code added to AppDelegate.swift will be executed.

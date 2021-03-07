@@ -23,7 +23,7 @@ This sample application consists of three projects: [nodejs](nodejs/README.md), 
 # System Requirements
 Android 7 or later: Google Chrome 64 or later  
 iOS version 11.2 or later: Safari Mobile 11 or later  
-Reference] https://pay.amazon.com/jp/help/202030010
+[Reference] https://pay.amazon.com/jp/help/202030010
 
 # Overview
 This sample application works on both Android and iOS as shown in the movie below.
@@ -36,7 +36,7 @@ This behavior is as shown in the following figure
 
 As shown in the following figure, * WebView ←→ Native ←→ Secure WebView works together to achieve this.
 
-! [](nodejs/docimg/flow.png)
+![](nodejs/docimg/flow.png)
 
 This sample application is created using WebView, but as you can see in the figure, it always goes through the Native processing first before interacting with Secure WebView.
 Therefore, even in the case of Native applications, it is possible to implement Amazon Pay by referring to this sample application.  
@@ -45,7 +45,7 @@ Therefore, even in the case of Native applications, it is possible to implement 
 ## [Reference] Tasks required for implementation in Browser versions for PC and Mobile
 When Amazon Pay is implemented in the Browser of PC and Mobile, the Flow is generally as follows.  
 
-! [](nodejs/docimg/browser-flow.png)  
+![](nodejs/docimg/browser-flow.png)  
 
 The required tasks are as follows: 1.  
 
@@ -62,7 +62,7 @@ When the payment process, such as credit, is completed on the Amazon side screen
 ## Tasks required for implementation in the mobile app version
 When implementing Amazon Pay in a mobile app, the basic Flow is the same, and is generally as follows.  
 
-! [](nodejs/docimg/app-flow.png)  
+![](nodejs/docimg/app-flow.png)  
 
 Many of the necessary tasks are basically the same as in the Browser, but there are some additional tasks because the Amazon side processing must be executed on Secure WebView.  
 The parts that differ from the Browser are indicated with **bold type**.  

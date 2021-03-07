@@ -50,7 +50,7 @@ The following code will do that.
     }
 
 }
-```.
+```
 
 With this configuration, it is possible to call Native methods from the JavaScript side, as shown below.
 ```js
@@ -76,6 +76,7 @@ The JavaScript code below does just that.
 
 By checking the existence of the Object for Callback set in "Setting up Callback acceptance from the JavaScript side of the mobile app" above, we can determine what environment it is for each.  
 The judgment result is set in a cookie so that it can be referred to on the Server side.  
+
 
 ### Placement of the "Amazon Pay Button" image
 
@@ -151,22 +152,13 @@ The process of "invokeAppLoginPage()" is shown below.
         tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        // Chrome Custom Tabs終了時に、Historyとして残らないようにするためのフラグ設定.
-        tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-
-        // Chrome Custom Tabsの起動
-        tabsIntent.launchUrl(context, Uri.parse(url));
-    }
-```
-
-
         // Set the flag so that it does not remain as History when Chrome Custom Tabs is closed.
         tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
 
         // Launch Chrome Custom Tabs.
         tabsIntent.launchUrl(context, Uri.parse(url));
     }
-```.
+```
 
 You can see that we are launching Chrome Custom Tabs (Secure WebView on the Android side) by specifying the URL.  
 In addition, we have generated a UUID (version 4) and named it "token" and set it as a parameter to the Field and URL on the Native side, but the reason for this is explained later.  
@@ -180,7 +172,8 @@ This screen transitions to the Amazon login screen by using JavaScript to call t
 ### Preparing to output the Amazon Pay button on the Server side
 In preparation for outputting the Amazon Pay button, we will generate the payload and signature required for outputting the Amazon Pay button on the Server side, and pass in the other configuration values.  
 
-``js
+
+```js
 // Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------
@@ -206,7 +199,7 @@ function createPayload(url) {
         storeId: keyinfo.storeId
     };
 }
-````
+```
 
 The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/... in the specified URL will be the redirect after logging in to Amazon Pay & selecting the address and payment method.  
 This URL is used to launch the Native code from Secure WebView with the "Applinks" technology described below.  
@@ -267,7 +260,7 @@ An HTML file with the following contents is placed at the end of this URL.
         location.href = "https://10.0.2.2:3443/static/next.html" + location.search;
     </script>
 </html>
-````
+```
 
 This redirects the file to "next.html" with the URL parameter specified when the file was accessed.  
 Note: The above is for a local environment, so the redirect is set to "https://10.0.2.2:3443/static/next.html", but you may need to change this depending on your environment, such as production or testing.  
@@ -289,7 +282,7 @@ The content of "next.html" is as follows.
         "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" + location.search;
 </script>
 </body>
-````
+```
 
 The URL that triggers Applinks with the URL parameter specified at the time of access is specified in the "id="nextButton"" link.  
 With this mechanism, if Applinks is not triggered, this screen will be displayed. By tapping on the "next" link, the user can ensure that the conditions are met and the Applinks are triggered.  
@@ -332,7 +325,7 @@ The Naive code invoked by Applinks is as follows.
         // This Activity's finish. (After this, the process will be moved to MainActivity#onResume)
         This.finish();
     }
-````
+```
 
 In this sample, Secure WebView (Chrome Custom Tabs) is set to automatically close when another Activity starts, so it is already closed when this Activity starts.
 
@@ -373,7 +366,7 @@ At this point, the cart page is displayed in WebView, and the following JavaScri
     function loadUrl(url) {
         location.href = url;
     }
-````
+```
 
 On the Server side, the following will be executed.
 
@@ -403,7 +396,7 @@ app.get('/sample/checkoutReview', async (req, res) => {
 
     res.render('sample/checkoutReview.ejs', order);
 });
-````
+```
 
 It calculates the amount of money by calculating the cart information, gets the address information from Amazon Pay API, and passes it to the template engine to generate and display the screen.
 
@@ -411,7 +404,7 @@ It calculates the amount of money by calculating the cart information, gets the 
 
 When you click the buy button, the following script will be executed.
 
-``js
+```js
 // Excerpt from nodejs/views/sample/checkoutReview.ejs (Some parts have been modified for clarity.)
 
             :
@@ -423,7 +416,7 @@ When you click the buy button, the following script will be executed.
         })
         .then(
             :
-````
+```
 
 Ajax will call the following Server-side Checkout Session Update API.  
 
@@ -482,7 +475,7 @@ async function updateCheckoutSession(data) {
         'x-amz-pay-idempotency-key': uuid.v4().toString().replace(/-/g, '')
     });
 }
-```.
+```
 
 Using Amazon Pay's API, we update the checkoutSession with information such as the purchase amount and the order number of the business, which are required for payment, and the URL that will be automatically redirected on the payment processing page (see below).  
 As for the "URL to be automatically redirected on the payment processing page," in the case of Browser, specify the URL of the Thanks page directly, and in the case of iOS and Android, specify the URL to the page for relay (see below).
@@ -521,11 +514,12 @@ When the Ajax Response is returned, the following will be executed.
             }
         );
     });
-```.
+```
 
 By checking the existence of the Callback Object passed to the WebView, the client environment is determined and the corresponding process is executed.  
 In this case, since we are using Android, the following will be executed.
-``js
+
+```js
                         androidApp.auth(json.webCheckoutDetails.amazonPayRedirectUrl);
 ```
 
@@ -539,7 +533,7 @@ This will execute the following process on the Native side, using the string "au
         Log.d("[JsCallback]", "auth");
         invokeAuthorizePage(getApplicationContext(), url);
     }
-````
+```
 
 The "invokeAuthorizePage" is as follows.
 
@@ -549,7 +543,7 @@ The "invokeAuthorizePage" is as follows.
     void invokeAuthorizePage(Context context, String url) {
         invokeSecureWebview(context, url);
     }
-````
+```
 
 With the above, you can open the URL included in the return value of the Amazon Pay API checkoutSession update process with Secure WebView.  
 
@@ -616,7 +610,7 @@ The following is the Native process invoked by the above Intent.
         // This Activity's finish. (After this, the process will be moved to MainActivity#onResume)
         This.finish();
     }
-```.
+```
 
 Set the URL of the Thanks page to MainActivity.  
 Then, we finish the AmazonPayActivity. This will move the process to MainActivity#onResume just below.  
@@ -702,7 +696,7 @@ When calling the Secure WebView startup process in JavaScript from WebView, a fu
     }
 </script>
                 :
-````
+```
 
 If you don't call this function, your screen will look like the following when Secure WebView is closed.  
 <img src="docimg/nocover-version.gif" width="300">  
@@ -767,7 +761,7 @@ First, let's look at the customization done in the process of creating the WebVi
 Also, the self-certificate installed in [Installation of this sample application](. /README_install.md) will also not be recognized by default.  
 So, create a directory named xml under the res directory, and create a configuration file there to recognize the user-installed certificate only in the development environment.  
 
-``xml
+```xml
 <! -- excerpt from network_security_config.xml -->
 <?xml version="1.0" encoding="utf-8"? >
 <network-security-config>
@@ -777,7 +771,7 @@ So, create a directory named xml under the res directory, and create a configura
         </trust-anchors> <certificates src="user"/> <!
     </debug-overrides>.
 </network-security-config>
-````
+```
 
 This is loaded in AndroidManifest.xml with the following specification.
 ```xml
@@ -808,6 +802,7 @@ The "Amazon Pay button" image to be specified in this case is ". /nodejs/static/
 
 ### Start Secure WebView when the Amazon Pay button image is clicked.
 When the "Amazon Pay Button" image above is clicked, the following code is called.  
+
 ```java
 // Excerpt from MainActivity.java (Some parts have been modified for clarity.)
 
@@ -838,7 +833,7 @@ When the "Amazon Pay Button" image above is clicked, the following code is calle
         // Launch Chrome Custom Tabs.
         tabsIntent.launchUrl(context, Uri.parse(url));
     }
-```.
+```
 
 You can see that we are launching Chrome Custom Tabs (Secure WebView on the Android side) by specifying the URL.  
 In addition, we have generated a UUID (version 4) and named it "token" and set it as a parameter to the Field and URL on the Native side, but the reason for this is explained later.  
@@ -852,7 +847,7 @@ This page outputs the Amazon Pay button behind the scenes, and automatically tra
 ### Preparing to output the Amazon Pay button on the server side
 In order to prepare for the output of the Amazon Pay button, we will generate the payload and signature necessary for the output of the Amazon Pay button on the server side, and pass in the other configuration values.  
 
-``js
+```js
 // Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------
@@ -878,7 +873,7 @@ function createPayload(url) {
         storeId: keyinfo.storeId
     };
 }
-````
+```
 
 The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/... in the specified URL will be the redirect destination after logging in to Amazon Pay & selecting the address and payment method.  
 This URL is used to launch the app from Secure WebView with the "Applinks" technology described below.  
@@ -968,6 +963,7 @@ https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-and
 
 As mentioned above, if Applinks is not triggered, the file that exists at the specified URL will be displayed.  
 An HTML file with the following contents is placed at the end of this URL.  
+
 ```html
 <! -- The same thing is placed under nodejs/links. -->
 
@@ -976,7 +972,7 @@ An HTML file with the following contents is placed at the end of this URL.
     location.href = "https://10.0.2.2:3443/static/next.html" + location.search;
 </script>
 </html>
-````
+```
 
 This redirects the file to "next.html" with the URL parameter specified when the file was accessed.  
 Note: The above is for a local environment, so the redirect is set to "https://10.0.2.2:3443/static/next.html", but you may need to change this depending on your environment, such as production or testing.  
@@ -998,7 +994,7 @@ document.getElementById("nextButton").href =
     "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" + location.search;
 </script>
 </body>
-````
+```
 
 The URL that triggers Applinks with the URL parameter specified at the time of access is specified in the "id="nextButton"" link.  
 With this mechanism, if Applinks is not triggered, this screen will be displayed. By tapping on the "next" link, the user can ensure that the conditions are met and the Applinks are triggered.  
@@ -1010,7 +1006,7 @@ With this mechanism, if Applinks is not triggered, this screen will be displayed
 ### token check and setting the destination URL to ViewController
 The process invoked by Applinks is as follows.  
 
-``java
+```java
 // Excerpt from AmazonPayActivity.java (Some parts have been modified for clarity.)
 
 protected void onCreate(Bundle savedInstanceState) {
@@ -1042,7 +1038,8 @@ protected void onCreate(Bundle savedInstanceState) {
     // This Activity's finish. (After this, the process will be moved to MainActivity#onResume)
     This.finish();
 }
-````
+```
+
 In this sample, Secure WebView (Chrome Custom Tabs) is already closed when this Activity is launched, because it is set to automatically close when another Activity is launched.
 
 First, get the URL parameter that was specified in the URL that triggered the Applinks.  
@@ -1058,7 +1055,8 @@ Since this may become a big problem depending on the screen flow, we have perfor
 If there is no problem with the token check, a purchase page will be built and displayed.  
 Since the purchase page needs information such as shipping address and amount, we need to call the following process on the server side to get these information.
 
-``js
+
+```js
 // Excerpt from nodejs/app.js (Some parts have been modified to make it easier to read.)
 
 //-------------------------
@@ -1085,7 +1083,8 @@ app.get('/sample/checkoutReview', async (req, res) => {
     // TODO Modify the ↓ part to return data in a format that is easy for the app to receive, such as JSON.
     // res.render('sample/checkoutReview.ejs', order);
 });
-```.
+```
+
 
 Calculate the cart information to get the amount, and also get the address information etc. from Amazon Pay API and return it.
 
@@ -1147,14 +1146,15 @@ async function updateCheckoutSession(data) {
         'x-amz-pay-idempotency-key': uuid.v4().toString().replace(/-/g, '')
     });
 }
-```.
+```
 
 This "URL to be automatically redirected on the payment processing page" is the URL to the relay page (see below), because the mobile app needs to launch the Native code.  
 The return value from the Amazon Pay API is directly returned as a Response of the Checkout Session Update API in this sample app.  
 The URLs that need to be redirected are as follows.
-```.
+
+```
 $.webCheckoutDetails.amazonPayRedirectUrl
-``` $.webCheckoutDetails.amazonPayRedirectUrl
+```
 
 When the Native app receives this Response, it will execute the following process using the above URL as a parameter.  
 
@@ -1164,7 +1164,7 @@ When the Native app receives this Response, it will execute the following proces
     void invokeAuthorizePage(Context context, String url) {
         invokeSecureWebview(context, url);
     }
-```.
+```
 
 With the above, you can open the URL included in the return value of the Amazon Pay API checkoutSession update process with Secure WebView.  
 
@@ -1227,7 +1227,7 @@ The Native process invoked by the above Intent is as follows.
         // finish of this Activity. (After this, the process will be moved to MainActivity#onResume)
         This.finish();
     }
-```.
+```
 
 Once we receive the Intent, we will build and display the Thanks page.
 At this time, we need to call "completeCheckoutSession" for checkoutSession to complete, so please call the Server side process and execute the following.
@@ -1248,6 +1248,6 @@ app.get('/sample/thanks', async (req, res) => {
     });
     // res.render('sample/thanks.ejs', order); // Modify this part to return the data in a format that is easy for the app to receive, such as JSON.
 });
-````
+```
 
 The above is a series of steps for a Native app based on this sample app.

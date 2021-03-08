@@ -41,22 +41,22 @@ As shown in the following figure, * WebView ←→ Native ←→ Secure WebView 
 This sample application is created using WebView, but as you can see in the figure, it always goes through the Native processing first before interacting with Secure WebView.
 Therefore, even in the case of Native applications, it is possible to implement Amazon Pay by referring to this sample application.  
 
-## [Reference] Overview of the tasks required to implement Amazon Pay
+# Overview of the tasks required to implement Amazon Pay
 ## [Reference] Tasks required for implementation in Browser versions for PC and Mobile
 When Amazon Pay is implemented in the Browser of PC and Mobile, the Flow is generally as follows.  
 
 ![](nodejs/docimg/browser-flow.png)  
 
-The required tasks are as follows: 1.  
+The required tasks are as follows: 
 
 1. place the Amazon Pay button on the cart page or product page.
     - At this time, set the URL of the purchase page, which will be redirected in ②. 2.
 2. "amazonCheckoutSessionId" will be passed to the URL at the time of the redirect in ②.
-    - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as a parameter, acquire the purchaser's name and address information, reflect it on the purchase page, and display it. 3.
-Perform the following processing when the purchase button is clicked.
+    - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as a parameter, acquire the purchaser's name and address information, reflect it on the purchase page, and display it. 
+3. Perform the following processing when the purchase button is clicked.
     - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as the parameter, and set the information necessary for payment, such as the amount of money, and the URL of the Thanks page, the redirect destination in 4.
-    - The return value of this API contains the URL to the "payment processing page" in (3), so redirect to that page. 4.
-When the payment process, such as credit, is completed on the Amazon side screen, the redirect in (4) will occur automatically.
+    - The return value of this API contains the URL to the "payment processing page" in (3), so redirect to that page. 
+4. When the payment process, such as credit, is completed on the Amazon side screen, the redirect in (4) will occur automatically.
     - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as the parameter to complete the Amazon Pay payment session, and display the Thanks page.
 
 ## Tasks required for implementation in the mobile app version
@@ -68,35 +68,35 @@ Many of the necessary tasks are basically the same as in the Browser, but there 
 The parts that differ from the Browser are indicated with **bold type**.  
 
 ### For WebView application
-As shown below, many parts are the same as Browser. 1.
+As shown below, many parts are the same as Browser. 
 
-Place an "Amazon Pay Button" image*** on the cart page or product page.
+1. Place an "Amazon Pay Button" image*** on the cart page or product page.
     - ***When this image is tapped, Secure WebView will display a "page that automatically transitions to the Amazon login screen" (described later in [android](android/README.md) and [ios](ios/README.md)). *** (1)
     - At this time, set the URL (iOS: Universal Links, Android: Applinks)*** to launch the native code that will be redirected in ②. 2.
 2. "amazonCheckoutSessionId" is passed to the URL at the time of the redirect in ②.
     - ***Native code will be started, so get "amazonCheckoutSessionId" included in the URL, and give it to redirect WebView to the purchase page***.
-    - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as a parameter, obtain the purchaser's name and address information, and reflect it on the purchase page for display. 3.
-Perform the following processing when the purchase button is clicked.
+    - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as a parameter, obtain the purchaser's name and address information, and reflect it on the purchase page for display. 
+3. Perform the following processing when the purchase button is clicked.
     - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as the parameter, and provide the information necessary for payment, such as the amount of money, and the "page for relay" ([android](android/ README.md) and [IOS](IOS/README.md).
-    - Since the return value of this API contains the URL to the "payment processing page" in (3), display it with ***Secure WebView***. 4.
-When the payment process, such as credit, is completed on the Amazon screen, the redirection in (4) will occur automatically.
+    - Since the return value of this API contains the URL to the "payment processing page" in (3), display it with ***Secure WebView***. 
+4. When the payment process, such as credit, is completed on the Amazon screen, the redirection in (4) will occur automatically.
     - ***Native code is activated by the relay page, so redirect the WebView to the Thanks page***.
     - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as a parameter to complete the Amazon Pay payment session, and display the Thanks page.
 
 ### For Native apps
 As shown below, many parts are common to Browser.  
-In the case of a Native app, the screen display and so on need to be implemented separately from the Browser, but the processing on the Secure WebView and the Server side are common. 1.  
+In the case of a Native app, the screen display and so on need to be implemented separately from the Browser, but the processing on the Secure WebView and the Server side are common. 
 
-Place a ***"Amazon Pay Button" image*** on the cart page or product page.
+1.  Place a ***"Amazon Pay Button" image*** on the cart page or product page.
     - ***When this image is tapped, the Secure WebView will display a "page that automatically transitions to the Amazon login screen" (described later in [android](android/README.md) and [ios](ios/README.md)). *** [android/README.md
     - At this time, set the URL (iOS: Universal Links, Android: Applinks)*** to launch the native code that will be redirected in ②. 2.
 2. "amazonCheckoutSessionId" is passed to the URL at the time of the redirect in ②.
     - The "amazonCheckoutSessionId" included in the URL is acquired because ***Native code is started***.
-    - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as a parameter, acquire the purchaser's name and address information, and reflect it on the purchase page for display. 3.
-Perform the following processing when the purchase button is clicked.
+    - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as a parameter, acquire the purchaser's name and address information, and reflect it on the purchase page for display. 
+3. Perform the following processing when the purchase button is clicked.
     - Call the Amazon Pay API on the Server side, and set the necessary information for payment, such as the amount of money, and the URL of the "page for relay" ([android](android/README.md), [ios](ios/README.md) to start the ***Native code for the redirected destination in 4. (see below))*** URL.
-    - The return value of this API contains the URL to the "payment processing page" shown in 3), so display it with ***Secure WebView***. 4.
-When the payment process, such as credit, is completed on the Amazon screen, the redirection in (4) will occur automatically.
+    - The return value of this API contains the URL to the "payment processing page" shown in 3), so display it with ***Secure WebView***. 
+4. When the payment process, such as credit, is completed on the Amazon screen, the redirection in (4) will occur automatically.
     - ***Native code is activated by the page for relay***.
     - On the Server side, call the Amazon Pay API with "amazonCheckoutSessionId" as a parameter to complete the Amazon Pay payment session, and display the Thanks page.
 

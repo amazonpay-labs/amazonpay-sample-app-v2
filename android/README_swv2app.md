@@ -1,84 +1,84 @@
-# Secure WebViewからアプリを起動する技術
-本サンプルアプリではSecure WebViewからアプリを起動するために、「Applinks」「Intent」の２つを使用しており、それぞれ下記のメリット/デメリットがあります。
+# Techniques to launch apps from Secure WebView
+In this sample application, we use "Applinks" and "Intent" to launch the application from Secure WebView, which have the following merits and demerits respectively.
 - Applinks  
-  - メリット : 確実に指定したモバイルアプリを起動できるため、Secureである
-  - デメリット : ユーザがLinkをタップしたときにしか発動しない
+  - Merit : Secure because you can launch the specified mobile app without fail.
+  - Demerit : Triggered only when the user taps the Link.
 - Intent
-  - メリット : JavaScriptからでも発動できる
-  - デメリット : 仕組み上、悪意のあるアプリが代わりに起動してしまうリスクを完全には排除できない
+  - Merit : Can be triggered from JavaScript
+  - Demerit : Due to the way it works, the risk that a malicious app will be launched instead cannot be completely eliminated.
 
-本サンプルアプリではこれらの特性を考慮して、それぞれを活用しております。  
-それぞれについて、下記に説明します。
+In this sample application, we have taken these characteristics into consideration and utilized each of them.  
+Each of them is explained below.
 
 ## Applinks
-Applinksとは、特定のURLのLinkがChrome上でタップされたときに登録されたアプリを起動できる機能です。  
-その特定のURLとモバイルアプリとのMappingはJSONファイルで定義されます。  
-そのJSONファイルはモバイルアプリ開発者が管理するServer上に置かれて、モバイルアプリがInstall/Updateされたタイミングでこの情報がInternet経由で読み込まれます。  
-そのServerがクラックされない限りはURLとモバイルアプリのMappingは確実に維持されるため、悪意のあるアプリが間違って起動されてしまう心配はありません。  
+Applinks is a function that can launch a registered app when a specific URL Link is tapped on Chrome.  
+The mapping between that specific URL and the mobile app is defined in a JSON file.  
+The JSON file is placed on a Server managed by the mobile app developer, and this information is loaded via the Internet when the mobile app is installed/updated.  
+As long as the Server is not cracked, the mapping between the URL and the mobile app will be maintained without fail, so there is no need to worry about a malicious app being launched by mistake.  
 
-URLとアプリとのMappingを行うJSONファイルを生成するためのツールが用意されているので、そちらを使って新規にMapping用のJSONファイルを生成する方法を説明します。  
+A tool for generating JSON files for mapping between URLs and apps is available, so I will explain how to generate a new JSON file for mapping using that tool.  
 
-「Tool」→「App Links Assistant」を起動します。
+Launch "Tool" -> "App Links Assistant".
 ![androidstudio-welcome](docimg/applinks-1.png)
 
-起動したApp Links Assistantの①の、「Open URL Mapping Editor」をクリックします。  
+Click "Open URL Mapping Editor" in ① of the launched App Links Assistant.  
 ![androidstudio-welcome](docimg/applinks-2.png)
 
-「+」より、新しいMappingを追加します。  
+Click "+" to add a new mapping.  
 ![androidstudio-welcome](docimg/applinks-3.png)
 
-「Host」に「https://{定義ファイルを配置する自身が管理するServerのドメイン}」、「Activity」では自分がMappingして起動したいActivityを選択します。  
-※ 「Path」を指定することで一つの定義ファイルで複数のActivityとURLのMappingが管理できますが、ここでは説明は割愛します。  
-![androidstudio-welcome](docimg/applinks-4.png)
+In the "Host" field, select "https://{domain of your own server where you want to place the definition file}", and in the "Activity" field, select the Activity you want to launch with your mapping.  
+In the "Host" field, select "{Server domain you manage to place the definition file}", and in the "Activity" field, select the Activity you want to map and launch. You can manage multiple Activities and URL Mappings in one definition file by specifying "Path", but we will not explain it here.  
+[androidstudio-www [androidstudio-welcome](docimg/applinks-4.png)
 
-「OK」でAndroidManifest.xmlに次のようなintent-filterが追加されます。  
+OK" will add the following intent-filter to AndroidManifest.xml.  
 ![androidstudio-welcome](docimg/applinks-5.png)
 
-アプリのインストール時・更新時に自動的にMappingがAndroidによって更新されるよう、下記のように「android:autoVerify="true"」という属性を手動で追加します。  
+Manually add the attribute "android:autoVerify="true"" as shown below so that Mapping will be automatically updated by Android when the app is installed or updated.  
 ![androidstudio-welcome](docimg/applinks-6.png)
 
-次に②の、「Select Activity」をクリックします。「Insert Code」をクリックすると、選択されたActivityにApplinksからの起動処理を受け取るロジックが追加されます。  
-![androidstudio-welcome](docimg/applinks-8.png)
+Next, click "Select Activity" in ②. Click "Insert Code" to add logic to the selected Activity to receive the startup process from Applinks.  
+Click "Insert Code. [androidstudio-welcome](docimg/applinks-8.png)
 ![androidstudio-welcome](docimg/applinks-9.png)
 
-次に③の、「Open Digital Asset Links File Generator」をクリックすると下記が開くので、環境に合わせて適切な値にして「Generate Digital Asset Links file」をクリックします。  
-![androidstudio-welcome](docimg/applinks-10.png)
+Next, click on (3), "Open Digital Asset Links File Generator" to open the following window, set the appropriate values for your environment and click "Generate Digital Asset Links file".  
+Click "Generate Digital Asset Links file". [androidstudio-welcome](docimg/applinks-10.png)
 
-「Save File」ボタンが出てきますので、こちらをクリックすると生成された定義ファイルの「assetlinks.json」を任意のFolderに保存できます。  
-![androidstudio-welcome](docimg/applinks-11.png)
+Click on the "Save File" button to save the generated definition file "assetlinks.json" to a folder of your choice.  
+Click on the ![androidstudio-welcome](docimg/applinks-11.png)
 
-定義ファイル「assetlinks.json」をServerに配置します。  
-このときの注意点としては、  
-  * DomainがWebアプリケーションとは違うサーバーにすること  
-  * httpsでファイルにアクセスできること  
-  * ファイル取得時のContent-Typeは「application/json」とすること  
-  * ファイルは「ドメインのルート/.well-known/」の下に配置すること  
+Place the definition file "assetlinks.json" in the Server.  
+The points to note at this point are.  
+  * Domain should be a different server from the web application.  
+  * The file must be accessible via https.  
+  * The Content-Type when retrieving the file must be "application/json".  
+  * The file should be placed under the "root of the domain/.well-known/".  
 
-などがあります。  
-本サンプルではAWS S3を使用してこの「assetlinks.json」を配置しています。
-AWS S3を使うと比較的簡単にできますので、ご参考にして見て下さい。  
+etc.  
+In this sample, we have used AWS S3 to place this "assetlinks.json" file.
+This is relatively easy to do using AWS S3, so please refer to it for reference.  
 
-定義ファイルの配置が完了したら、「Link and Verify」をクリックしてみて下さい。  
-正しく設定できていれば、下のようにダイアログ下部に検証OKのメッセージが出力されます。  
+After the definition file has been placed, click on "Link and Verify".  
+If the settings are correct, a verification OK message will be output at the bottom of the dialog as shown below.  
 ![androidstudio-welcome](docimg/applinks-12.png)
 
-④の「Test App Links」をクリックすると、Emulator上で検証できます。  
-下記ダイアログが開くので、「Run Test」ボタンをクリックします。  
+Click "Test App Links" in ④ to verify on the Emulator.  
+The following dialog will open, and click the "Run Test" button.  
 ![androidstudio-welcome](docimg/applinks-13.png)
 
-Emulator上での検証がOKなら、下記のように検証OKのメッセージが出力されます。
+If the verification on the Emulator is OK, the verification OK message will be output as shown below.
 ![androidstudio-welcome](docimg/applinks-14.png)
 
-ここまでで、Nativeコードを呼び出す準備が整いました。  
-後は「https://{'applinks.json'を配置したサーバーのドメイン}」/...」というURLのLinkをChrome Custom Tabs上でタップすれば、途中で指定したActivityに追加したコードが実行されるはずです。  
+Now we are ready to call the Native code.  
+All that's left to do is to create a Link with the URL "https://{domain of the server where 'aplinks.json' was placed}"/...". on Chrome Custom Tabs, and the code you added to the Activity you specified during the process should be executed.  
 
-参考として、本サンプルの該当するNativeのコードを下記に示します。
+For reference, here is the Native code for this sample.
 
 ```java
-// MainActivity.javaから抜粋
+// Excerpt from MainActivity.java
 
                 :
-        // Applinksからintentを取得
+        // Get an intent from Applinks
         Intent intent = getIntent();
         if (intent.getScheme().equals("https")) {
             String appLinkAction = intent.getAction();
@@ -86,22 +86,22 @@ Emulator上での検証がOKなら、下記のように検証OKのメッセー�
             Log.d("[AppLink]", appLinkAction);
             Log.d("[AppLink]", "" + appLinkData);
 
-            //　URLパラメータをparse
+            // parse the URL parameter
             Map<String, String> map = new HashMap<>();
             for (String kEqV : appLinkData.getEncodedQuery().split("&")) {
                 String[] kv = kEqV.split("=");
                 map.put(kv[0], kv[1]);
             }
                 :
-```
+````
 
-なお、Applinksが発動する条件は、基本的には「https://{'apple-app-site-association'を配置したサーバーのドメイン}」/...」というURLのLinkをChrome Custom Tabs上でタップしたときで、JavaScriptなどでこのURLをloadしても起動しません。  
-実験してみたところ、iOSのUniversal Linksとは違ってRedirectした場合 ( = HTTP 302 が返却されるときのLocationヘッダに「https://{'apple-app-site-association'を配置したサーバーのドメイン}」/...」を指定した場合) には発動するようでした。  
+Note that the condition for triggering Applinks is basically "https://{domain of the server where the 'apple-app-site-association' is located}"/... The condition that triggers it is basically when you tap the URL "{'apple-app-site-association' server domain}"/..." on Chrome Custom Tabs, and even if you load this URL with JavaScript, it will not be activated.  
+I experimented and found that unlike iOS Universal Links, when Redirecting (= HTTP 302) is returned, the Location header contains "https://{domain of the server where the 'apple-app-site-association' is located }"/... in the Location header when HTTP 302 is returned).  
 
 ## Intent
-IntentはAndroidにおけるアプリ連携の基本的な仕組みで、AndroidManifext.xmlにintent-filterを定義することで呼び出せるようになります。
+Intent is the basic mechanism of app association in Android, and can be called by defining "intent-filter" in AndroidManifext.xml.
 
-本サンプルアプリのAndroidManifext.xmlの該当箇所を抜粋します。  
+The following is an excerpt from the AndroidManifext.xml of this sample app.  
 ```xml
                     :
         <activity android:name=".AmazonPayActivity">
@@ -115,21 +115,21 @@ IntentはAndroidにおけるアプリ連携の基本的な仕組みで、Android
                 <data
                     android:host="amazon_pay_android_v2"
                     android:scheme="amazon_pay_android_v2" />
-            </intent-filter>
+            </intent-filter
         </activity>
                     :
-```
+````
 
-本サンプルアプリでは、こちらを下記のようにJavaScriptを使って起動しています。
+In this sample application, this one is launched using JavaScript as shown below.
 
 ```html
-<!-- nodejs/views/static/dispatcher.htmlより抜粋(見やすくするため、一部加工しています。) -->
+<! -- Excerpt from nodejs/views/static/dispatcher.html (Some parts have been modified to make it easier to read.) --> <!
 
 <script type="text/javascript" charset="utf-8">
         :
-    location.href = 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end;';
+    location.href = 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end ;';
         :
 </script>
-```
+```.
 
-上記設定方法からも分かる通り、悪意のあるモバイルアプリが全く同じintent-filterを登録してしまうことを完全に防ぐ方法はなく、センシティブな情報などをモバイルアプリ側に送信する手段としては不向きです。
+As you can see from the above configuration method, there is no way to completely prevent a malicious mobile app from registering the exact same intent-filter, and it is not suitable as a means to send sensitive information and other information to the mobile app side.

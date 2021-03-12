@@ -1,35 +1,35 @@
-# Amazon Pay モバイル サンプルアプリ Androidアプリの実装について
-本サンプルアプリの、Androidアプリ側の実装です。インストールして動作させる方法については、[こちら](./README_install.md)をご参照下さい。
+# Amazon Pay Mobile Sample App Android App Implementation
+This is the implementation of the Android application side of this sample app. For instructions on how to install and run the app, please refer to [here](. /README_install.md).
 
-## 動作環境
-Android 7以降: Google Chrome 64以降  
-[参考] https://pay.amazon.com/jp/help/202030010
+## Operating environment
+Android 7 or later: Google Chrome 64 or later  
+[Reference] https://pay.amazon.com/jp/help/202030010
 
-# その他の前提条件
-本サンプルアプリではApplinksという技術を使っており、こちらを利用するためには下記の条件が必要です。
- - Web上のhttpsで正しくアクセスできる場所に設定ファイルを配置する必要があるので、ECサイトとは別ドメインのサーバーか、AWS等のクラウドサービスのアカウントを保有していること  
-   Note: 本サンプルアプリでは、[Amazon S3](https://aws.amazon.com/jp/s3/)を利用しています。こちらはアカウントをInternet上で簡単に取得でき、世界中で広く使われており、利用方法などの情報も多く、12ヶ月間 5GBの無料利用枠もあるため、お勧めです。  
+# Other prerequisites
+This sample application uses a technology called Applinks, and the following conditions are required to use this technology.
+ - Because the configuration file must be placed in a location on the Web that can be properly accessed via https, you must have a server with a different domain from the EC site, or an account with a cloud service such as AWS.  
+   Note: In this sample application, [Amazon S3](https://aws.amazon.com/jp/s3/) is used. It is easy to get an account on the Internet, is widely used around the world, has a lot of information on how to use it, and has a free usage limit of 5GB for 12 months, so it is recommended.  
 
-## 概要
-本サンプルアプリは、下記動画のように動作いたします。
+## Overview
+This sample application will work as shown in the video below.
 
 <img src="docimg/android-movie.gif" width="300">  
 
-フローの詳細は、[flow-android.xlsx](./flow-android.xlsx) をご参照ください。  
-こちらのフローをベースに、以後詳細な実装方法について解説します。
+For details of the flow, please refer to [flow-android.xlsx](. /flow-android.xlsx).  
+Based on this flow, we will explain the detailed implementation in the following sections.
 
-# Amazon Payの実装方法 - WebViewアプリ編
+# How to implement Amazon Pay - WebView app version
 
-## カートページ
+## Cart page
 
 <img src="docimg/cart.png" width="500">  
 
-### モバイルアプリのJavaScript側からのCallback受付の設定
-モバイルアプリではAmazon Payの処理はSecure WebView上で実行する必要がありますが、WebViewから直接Secure WebViewは起動できないため、WebViewのJavaScriptから一旦Nativeコードを起動できるよう設定する必要があります。  
-それを行うのが下記のコードです。  
+### Setting up Callback acceptance from the JavaScript side of the mobile app
+In the mobile app, the Amazon Pay process needs to be executed on the Secure WebView, but since the Secure WebView cannot be launched directly from the WebView, it is necessary to configure it so that the Native code can be launched once from the WebView's JavaScript.  
+The following code will do that.  
 
 ```java
-// MainActivity.javaから抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from MainActivity.java (Some parts have been modified for clarity.)
 
     protected void onCreate(Bundle savedInstanceState) {
                 :
@@ -52,18 +52,18 @@ Android 7以降: Google Chrome 64以降
 }
 ```
 
-このように設定すると、下記のようにJavaScript側からNative側のメソッドを呼び出すことが可能になります。
+With this configuration, it is possible to call Native methods from the JavaScript side, as shown below.
 ```js
                 androidApp.login();
 ```
 
-### クライアント判定
-本サンプルアプリでは、同一のHTML/JavaScriptの画面でAndroid/iOS/通常のBrowserの全てに対応しております。  
-そのため、動作環境に応じて処理を切り替える必要がある場合には、クライアントを判定して条件分岐を行う必要があります。  
-それを行っているのが、下記のJavaScriptのコードです。
+### Client Determination
+This sample app supports all of Android/iOS/normal Browser with the same HTML/JavaScript screen.  
+Therefore, if you need to switch the process according to the operating environment, you need to judge the client and do a conditional branch.  
+The JavaScript code below does just that.
 
 ```js
-// nodejs/views/sample/cart.ejsより抜粋
+// Excerpt from nodejs/views/sample/cart.ejs
 
     let client = "browser";
     if(window.androidApp) {
@@ -74,30 +74,31 @@ Android 7以降: Google Chrome 64以降
     document.cookie = "client=" + client + ";path=/;secure";
 ```
 
-上記「モバイルアプリのJavaScript側からのCallback受付の設定」で設定されたCallback用のObjectの存在確認を行うことで、それぞれ何の環境なのかを判定しています。  
-判定結果はServer側でも参照できるよう、Cookieに設定しています。  
+By checking the existence of the Object for Callback set in "Setting up Callback acceptance from the JavaScript side of the mobile app" above, we can determine what environment it is for each.  
+The judgment result is set in a cookie so that it can be referred to on the Server side.  
 
-### 「Amazon Payボタン」画像の配置
 
-Amamzon Payで支払いができることをユーザに視覚的に伝えるのには、Amazon Payボタンを画面に表示するのが効果的です。  
-WebView上では本物のAmazon Payボタンを配置できないので、ここでは画像を代わりに配置しています。
+### Placement of the "Amazon Pay Button" image
 
-それを行っているのが、下記のJavaScriptです。
+Displaying an Amazon Pay button on the screen is an effective way to visually communicate to users that they can pay with Amazon Pay.  
+Since we cannot place a real Amazon Pay button on the WebView, we place an image instead.
+
+This is done in the following JavaScript.
 ```js
-// nodejs/views/sample/cart.ejsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/views/sample/cart.ejs (Some parts have been modified for clarity.)
 
     if(client === 'browser') {
-        amazon.Pay.renderButton('#AmazonPayButton', {
+        Amazon.Pay.renderButton('#AmazonPayButton', {
             :
         });
     } else {
         let node = document.createElement("input");
         node.type = "image";
-        node.src = "/static/img/button_images/Sandbox-live-ja_jp-amazonpay-gold-large-button_T2.png";
+        node.src = "/static/img/button_images/Sandbox-live-en_jp-amazonpay-gold-large-button_T2.png";
         node.addEventListener('click', (e) => {
             coverScreen();
             if(client === 'androidApp') {
-                // → Androidの場合. 
+                // -> Android.
                 androidApp.login();
             } else {
                 webkit.messageHandlers.iosApp.postMessage({op: 'login'});
@@ -107,27 +108,27 @@ WebView上では本物のAmazon Payボタンを配置できないので、ここ
     }
 ```
 
-最初の判定で、通常のBrowserだった場合にはそのままAmazon Payの処理が実施できるので、通常通りAmazon Payボタンを読み込んでいます。  
-Androidの場合は、「Amazon Payボタン」画像のnodeを生成して同画面内の「AmazonPayButton」ノードの下に追加しています。  
-この時指定する「Amazon Payボタン」画像は「./nodejs/static/img/button_images」の下にあるものから選ぶようにして下さい。なお、本番環境向けにファイル名が「Sandbox_」で始まるものを指定しないよう、ご注意下さい。  
-また、この生成したnodeがclickされたとき、「login」を指定したObjectをパラメタとして、Native側のCallbackを呼び出すEvent Handlerをaddしています。  
+In the first judgment, if the browser is a normal browser, the Amazon Pay process can be implemented as is, so the Amazon Pay button is loaded as usual.  
+In the case of Android, we generate a node for the "Amazon Pay Button" image and add it under the "AmazonPayButton" node in the same screen.  
+The "Amazon Pay Button" image to be specified at this time is ". /nodejs/static/img/button_images". Please be careful not to specify a file name that begins with "Sandbox_" for the production environment.  
+Also, when the generated node is clicked, we add an Event Handler that calls the native Callback with the Object that specifies "login" as a parameter.  
 
-### 「Amazon Payボタン」画像クリック時の、Secure WebViewの起動処理
-上記、「Amazon Payボタン」画像がクリックされたときに呼び出されるNative側のコードが、下記になります。  
+### Start Secure WebView when the "Amazon Pay Button" image is clicked.
+The following is the Native code that is called when the "Amazon Pay Button" image is clicked.  
 
 ```java
-// MainActivity.javaから抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from MainActivity.java (Some parts have been modified for clarity.)
 
     @JavascriptInterface
     public void login() {
         Log.d("[JsCallback]", "login");
         invokeAppLoginPage(getApplicationContext());
     }
-```
+````
 
-「invokeAppLoginPage()」の処理が、下記になります。  
+The process of "invokeAppLoginPage()" is shown below.  
 ```java
-// MainActivity.javaから抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from MainActivity.java (Some parts have been modified for easier viewing.)
 
         :
     static volatile String token = null;
@@ -140,53 +141,54 @@ Androidの場合は、「Amazon Payボタン」画像のnodeを生成して同�
     private void invokeSecureWebview(Context context, String url) {
         CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder().build();
 
-        // 起動するBrowserにChromeを指定
-        // Note: Amazon Payでは他のブラウザがサポート対象に入っていないため、ここではChromeを指定している.
-        // [参考] https://pay.amazon.com/jp/help/202030010
-        // もしその他のChrome Custom Tabs対応のブラウザを起動する必要がある場合には、下記リンク先ソースなどを参考に実装する.
-        // [参考] https://github.com/GoogleChrome/custom-tabs-client/blob/master/shared/src/main/java/org/chromium/customtabsclient/shared/CustomTabsHelper.java#L64
+        // Specify Chrome as the Browser to launch
+        Build(); // Specify Chrome as the Browser to launch // Note: Chrome is specified here because Amazon Pay does not support other browsers.
+        // [Reference] https://pay.amazon.com/jp/help/202030010
+        // If you need to launch other browsers that support Chrome Custom Tabs, please refer to the following source code for implementation.
+        // [Reference] https://github.com/GoogleChrome/custom-tabs-client/blob/master/shared/src/main/java/org/chromium/customtabsclient/shared/ CustomTabsHelper.java#L64
         tabsIntent.intent.setPackage("com.android.chrome");
 
-        // 別のActivityへの遷移時に、自動的にChrome Custom Tabsを終了させるためのフラグ設定.
+        // Set the flag to automatically terminate Chrome Custom Tabs when transitioning to another Activity.
         tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        // Chrome Custom Tabs終了時に、Historyとして残らないようにするためのフラグ設定.
+        // Set the flag so that it does not remain as History when Chrome Custom Tabs is closed.
         tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
 
-        // Chrome Custom Tabsの起動
+        // Launch Chrome Custom Tabs.
         tabsIntent.launchUrl(context, Uri.parse(url));
     }
 ```
 
-URLを指定して、Chrome Custom Tabs(Android側のSecure WebView)を起動しているのが分かると思います。  
-なお、UUID(version 4)を生成して「token」という名前で、Native側のFieldとURLのパラメタとして設定していますが、こちらの理由については後述します。  
+You can see that we are launching Chrome Custom Tabs (Secure WebView on the Android side) by specifying the URL.  
+In addition, we have generated a UUID (version 4) and named it "token" and set it as a parameter to the Field and URL on the Native side, but the reason for this is explained later.  
 
-## 自動的にAmazonログイン画面に遷移させるページ
+## Page that automatically transitions to the Amazon login screen
 
 <img src="docimg/appLogin.png" width="500">  
 
-こちらの画面ではAmazon Payが用意した「initCheckout」というメソッドをJavaScriptでcallすることで、Amazonログイン画面に遷移させています。  
+This screen transitions to the Amazon login screen by using JavaScript to call the "initCheckout" method prepared by Amazon Pay.  
 
-### Server側のAmazon Payボタン出力準備
-Amazon Payボタンを出力するための準備として、Server側にてAmazon Payボタンの出力に必要なpayloadと signatureの生成、その他の設定値の受け渡しを行います。  
+### Preparing to output the Amazon Pay button on the Server side
+In preparation for outputting the Amazon Pay button, we will generate the payload and signature required for outputting the Amazon Pay button on the Server side, and pass in the other configuration values.  
+
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------
 // App Login Screen
 //-------------------
 
 app.get('/appLogin', async (req, res) => {
-    // ※ req.queryには、上記ViewControllerで指定されたURLパラメタが入る
-    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`));
+    // * req.query will contain the URL parameter specified in ViewController above.
+    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query. client}.html?token=${req.query.token}`));
 });
 
 function calcConfigs(url) {
     const payload = createPayload(url);
     const signature = apClient.generateButtonSignature(payload);
-    return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId};
+    return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId}
 }
 
 function createPayload(url) {
@@ -199,13 +201,13 @@ function createPayload(url) {
 }
 ```
 
-指定されているURLの「https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/...」 はAmazon Payへのログイン & 住所・支払い方法の選択後のリダイレクト先になります。  
-このURLは後述の「Applinks」という技術でSecure WebViewからNativeコードを起動するために使用されます。  
+The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/... in the specified URL will be the redirect after logging in to Amazon Pay & selecting the address and payment method.  
+This URL is used to launch the Native code from Secure WebView with the "Applinks" technology described below.  
 
-これらの値が「appLogin.ejs」にパラメタとして渡され、HTML & CSS & JavaScriptが生成されます。  
+These values are passed as parameters to "appLogin.ejs" to generate the HTML, CSS & JavaScript.  
 
 ```html
-<!-- nodejs/views/appLogin.ejsより抜粋 (見やすくするため、一部加工しています。) -->
+<! -- Excerpt from nodejs/views/appLogin.ejs (Some parts have been modified for clarity.) --> :.
 
     :
 <script src="https://static-fe.payments-amazon.com/checkout.js"></script>
@@ -218,40 +220,40 @@ function createPayload(url) {
         productType: 'PayAndShip', // checkout type
         placement: 'Cart', // button placement
         createCheckoutSessionConfig: {
-            payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (※ HTML Escapeをしないで出力する)
+            payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (* output without HTML Escape)
             signature: '<%= signature %>', // signature generated in step 3
-            publicKeyId: '<%= publicKeyId %>' 
+            publicKeyId: '<%= publicKeyId %>'
         }
     });    
-</script>
+</script
 ```
 
-この「initCheckout」メソッドの呼出により、自動的にAmazon Payのログイン画面に遷移させています。  
-こちらのファイルは[EJS](https://ejs.co/)というTemplate Engineを使って作成されていますが、構文はTemplate Engineとしては一般的なものであるため、比較的簡単に理解できるかと思います。  
+This call to the "initCheckout" method automatically transitions to the Amazon Pay login screen.  
+This file is created using Template Engine called [EJS](https://ejs.co/), but the syntax is common for Template Engine, so it should be relatively easy to understand.  
 
-## Amazon側の画面からのリダイレクトによる、Applinksの発動
+## Triggering Applinks by redirecting from Amazon's screen
 
 <img src="docimg/applinks.png" width="500">  
 
-### Applinksについて
-Applinksについての詳細については、[こちら](./README_swv2app.md)に記載しております。
+### About Applinks
+For more information about Applinks, see [here](. /README_swv2app.md).
 
-Applinksの基本的な発動条件は「Chrome/Chrome Custom Tabs等でLinkをタップする」ことですが、ServerからのRedirectでも発動することがあります。  
-Applinksが発動しなかった場合には、指定されたURLに存在するファイルが通常通りに表示されます。  
+The basic condition for triggering Applinks is "tapping the Link in Chrome/Chrome Custom Tabs, etc.", but it may also be triggered by a Redirect from the Server.  
+If Applinks is not triggered, the files existing at the specified URL will be displayed as usual.  
 
-### 救済ページを使った2段構えのApplinksの発動
-本サンプルでは、Amazon側のページでログイン＆住所・支払い方法の選択をしたあとのリダイレクトでApplinksが発動するURLを指定していますが、上記の理由により、ここでは発動しない可能性もあります。  
+### Triggering two-stage Applinks with a rescue page
+In this sample, we have specified a URL where Applinks will be triggered by a redirect after logging in and selecting an address and payment method on the Amazon page, but for the reasons mentioned above, there is a possibility that Applinks will not be triggered here.  
 
-本サンプルではその場合の備えとして、発動しなかった場合には再度Applinksが発動するURLへのリンクを持つ、救済ページに自動的に遷移するように作られています。  
-ここではその仕組を説明します。  
+However, for the reasons mentioned above, there is a possibility that Applinks will not be triggered here. As a precaution, this sample is designed to automatically redirect the user to a relief page with a link to the URL where Applinks will be triggered again if it is not triggered.  
+Here's how it works.  
 
-「自動的にAmazonログイン画面に遷移させるページ」で登場した、Applinksを発動させるURLのAndroid版は、下記になります。  
+The Android version of the URL that triggers Applinks, which appeared in "The page that automatically transitions to the Amazon login screen," is as follows  
 https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-androidApp.html?token=XXXXXXXX
 
-上記でも書いたとおり、Applinksが発動しなかった場合には、指定されたURLに存在するファイルが表示されます。  
-このURLの先には下記の内容のHTMLファイルが置かれております。  
+As mentioned above, if Applinks is not triggered, the file that exists at the specified URL will be displayed.  
+An HTML file with the following contents is placed at the end of this URL.  
 ```html
-<!-- nodejs/linksの下にも同じものが置かれています。 -->
+<! -- The same thing is placed under nodejs/links. -->
 
 <html>
     <script>
@@ -260,40 +262,41 @@ https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-and
 </html>
 ```
 
-こちらはファイルにアクセス時に指定されたURLパラメタを付与した上で、「next.html」にリダイレクトしています。  
-Note: ↑はlocal環境用なのでリダイレクト先が「https://10.0.2.2:3443/static/next.html 」になっていますが、こちらは本番・各テスト等の環境に応じて変更する必要があります。  
-「next.html」の中身が下記です。  
+This redirects the file to "next.html" with the URL parameter specified when the file was accessed.  
+Note: The above is for a local environment, so the redirect is set to "https://10.0.2.2:3443/static/next.html", but you may need to change this depending on your environment, such as production or testing.  
+The content of "next.html" is as follows.  
 ```html
-<!-- nodejs/static/next.htmlより抜粋 -->
+<! -- excerpt from nodejs/static/next.html -->
 
 <body data-gr-c-s-loaded="true">
 <div class="container">
-    <h3 class="my-4">Amazon Login 処理完了</h3>
-    「次へ」ボタンをタップして下さい。<br>
+    <h3 class="my-4">Amazon Login processing completed</h3>.
+    Please tap the "Next" button. <br>
     <br>
     <a id="nextButton" href="#" class="btn btn-info btn-lg btn-block">
-        次　へ
+        Next
     </a>
 </div>
 <script>
-    document.getElementById("nextButton").href = 
+    document.getElementById("nextButton").href =
         "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" + location.search;
 </script>
 </body>
 ```
 
-アクセス時に指定されたURLパラメタを付与したApplinksを発動するURLを「id="nextButton"」のリンクに指定しております。  
-この仕組みにより、Applinksが発動しなかった場合にはこちらの画面が表示されます。この「次へ」のLinkをユーザがタップすることで、確実に条件を満たしてApplinksを発動させることができます。  
+The URL that triggers Applinks with the URL parameter specified at the time of access is specified in the "id="nextButton"" link.  
+With this mechanism, if Applinks is not triggered, this screen will be displayed. By tapping on the "next" link, the user can ensure that the conditions are met and the Applinks are triggered.  
 
-## 購入ページ
+## Purchase page
 
 <img src="docimg/purchase.png" width="650">  
 
-### tokenチェックとViewControllerへの遷移先URLの設定
-Applinksにより起動されるNaiveコードは、下記になります。  
+### token check and setting the destination URL to ViewController
+The Naive code invoked by Applinks is as follows.  
+
 
 ```java
-// AmazonPayActivityより抜粋　(見やすくするため、一部加工しています。)
+// Excerpt from AmazonPayActivity (Some parts have been modified for clarity.)
 
     protected void onCreate(Bundle savedInstanceState) {
                 :
@@ -304,7 +307,7 @@ Applinksにより起動されるNaiveコードは、下記になります。
             Log.d("[AppLink]", appLinkAction);
             Log.d("[AppLink]", "" + appLinkData);
 
-            // URLパラメタのパース
+            // Parse the URL parameter
             Map<String, String> map = new HashMap<>();
             for (String kEqV : appLinkData.getEncodedQuery().split("&")) {
                 String[] kv = kEqV.split("=");
@@ -319,44 +322,45 @@ Applinksにより起動されるNaiveコードは、下記になります。
 
         } else {
                 :
-        // 本Activityのfinish. (この後、MainActivity#onResumeに処理が移る)
-        this.finish();
+        // This Activity's finish. (After this, the process will be moved to MainActivity#onResume)
+        This.finish();
     }
 ```
-本サンプルでは、Secure WebView(Chrome Custom Tabs)は他のActivityが起動したら自動的にCloseされるよう設定されているため、このActivityが起動した時点で既にCloseされています。
 
-最初に、Applinks発動のURLに指定されていたURLパラメタを取得します。  
+In this sample, Secure WebView (Chrome Custom Tabs) is set to automatically close when another Activity starts, so it is already closed when this Activity starts.
 
-その後、「『Amazon Payボタン』画像クリック時の、Secure WebViewの起動処理」でMainActivityに保持したtokenと、Secure WebViewから受け渡されたtokenの一致判定を行っています。  
-このtokenの判定を行うことで、不正な遷移でこの処理が起動された場合に、それを検出してエラーとできるようになります。
+First, get the URL parameter that was specified in the URL that triggered the Applinks.  
 
-例えば、悪いユーザがSecure WebViewを起動する時の「自動的にAmazonログイン画面に遷移させるページ」へのURLを読み取って、メールなどで他のユーザに送ったとします。  
-送りつけられたユーザがAndroid端末でメールのURLのリンクをクリックした場合、Chromeが立ち上がってAmazon Payログインに遷移してしまう可能性があります。  
-もしそのままAmazon Payにログインして、住所・支払い方法選択も実施した場合、ChromeならApplinksも発動してしまいますので、同アプリをインストールしていればその後の購入フローも実行できることになってしまいます。  
-画面のFlowによってはこれが大きな問題になる可能性もあるため、本サンプルアプリでは念のためにtokenチェックを行っております。  
+After that, it judges whether the token passed from Secure WebView matches the token stored in MainActivity in "Processing the start of Secure WebView when the 'Amazon Pay Button' image is clicked".  
+By judging the token, we can detect and raise an error if this process is launched with an invalid transition.
 
-tokenチェックの後は、購入ページのURLをMainActivityに設定します。  
-購入ページのURLには「amazonCheckoutSessionId」をURLパラメタを付与しますが、これはPC・Mobileのブラウザでの購入ページへの遷移と全く同じURL・全く同じ条件になります。  
-よって、この後の購入ページの表示では「モバイルアプリ向け」「PC・Mobileのブラウザ向け」で別々の処理を実装する必要はありません。  
+For example, let's say a bad user reads the URL to the "page that automatically transitions to the Amazon login screen" when launching Secure WebView, and sends it to another user via email.  
+If the user who was sent the URL clicks on the link in the email on their Android device, Chrome may launch and take them to the Amazon Pay login.  
+If the user logs in to Amazon Pay and selects an address and payment method, Chrome will also trigger Applinks, which means that if the user has installed the app, they will be able to execute the subsequent purchase flow.  
+Since this may become a big problem depending on the screen flow, we have performed a token check in this sample app just in case.  
 
-最後に、AmazonPayActivityをfinishします。これにより、すぐ下のMainActivity#onResume処理が移ります。  
+After the token check, set the URL of the purchase page to MainActivity.  
+The URL parameter "amazonCheckoutSessionId" is given to the URL of the purchase page, which is the exact same URL and the exact same conditions as the transition to the purchase page in the PC and Mobile browsers.  
+Therefore, there is no need to implement separate processes for "for mobile apps" and "for PC and mobile browsers" when displaying the purchase page after this.  
 
-### 購入ページの読み込み
+Finally, we finish the AmazonPayActivity. This will move the MainActivity#onResume process immediately below.  
 
-MainActivityでは、onResumeの中の下記の処理が起動します。  
+### Loading the purchase page
+
+In MainActivity, the following process in onResume will be invoked.  
 
 ```java
-// MainActivity.javaより抜粋　(見やすくするため、一部加工しています。)
+// Excerpt from MainActivity.java (Some parts have been modified for clarity.)
 
                     :
         String url = webviewUrl;
-        if (url != null) {
+        if (url ! = null) {
             webviewUrl = null;
             webView.loadUrl("javascript:loadUrl('" + url + "')");
                     :
 ```
 
-WebViewではこの時点でカートページが表示されており、上記にて下記のJavaScriptが起動して購入ページの読み込みが開始します。  
+At this point, the cart page is displayed in WebView, and the following JavaScript is triggered above to start loading the purchase page.  
 
 ```js
     function loadUrl(url) {
@@ -364,44 +368,44 @@ WebViewではこの時点でカートページが表示されており、上記�
     }
 ```
 
-Server側では下記が実行されます。
+On the Server side, the following will be executed.
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------------
 // Checkout Review Screen
 //-------------------------
 app.get('/sample/checkoutReview', async (req, res) => {
-    // 受注情報
+    // Order information
     let order = {host: req.headers.host, amazonCheckoutSessionId: req.query.amazonCheckoutSessionId,
         client: req.cookies.client, hd8: req.cookies.hd8, hd10: req.cookies.hd10, items: []};
     order.items.push({id: 'item0008', name: 'Fire HD8', price: 8980, num: parseInt(order.hd8)});
     order.items.push({id: 'item0010', name: 'Fire HD10', price: 15980, num: parseInt(order.hd10)});
-    order.items.forEach(item => item.summary = item.price * item.num); // 小計
-    order.price = order.items.map(item => item.summary).reduce((pre, cur) => pre + cur); // 合計金額
-    order.chargeAmount = Math.floor(order.price * 1.1); // 税込金額
+    order.items.forEach(item => item.summary = item.price * item.num); // Subtotal
+    order.price = order.items.map(item => item.summary).reduce((pre, cur) => pre + cur); // total amount
+    order.chargeAmount = Math.floor(order.price * 1.1); // amount including tax
 
-    // Amazon Pay受注情報
-    const payload = await apClient.getCheckoutSession(req.query.amazonCheckoutSessionId, 
+    // Amazon Pay order information
+    const payload = await apClient.getCheckoutSession(req.query.amazonCheckoutSessionId,
         {'x-amz-pay-idempotency-key': uuid.v4().toString().replace(/-/g, '')});
     order.checkoutSession = JSON.parse(payload.body);
 
-    // Note: 一般的には受注情報はSessionやDBなどを使ってServer側に保持しますが、本サンプルではシンプルにするためにCookieを使用しています
+    // Note: In general, order information is kept on the Server side using Session or DB, but this sample uses Cookie for simplicity.
     res.cookie('session', JSON.stringify(order), {secure: true});
-    
+
     res.render('sample/checkoutReview.ejs', order);
 });
 ```
 
-cartの情報を計算して金額を出し、またAmazon Pay APIより住所情報等を取得し、template engineに渡して画面を生成して表示します。
+It calculates the amount of money by calculating the cart information, gets the address information from Amazon Pay API, and passes it to the template engine to generate and display the screen.
 
-### 購入ボタンクリック時の処理
+### Processing when a purchase button is clicked.
 
-購入ボタンをクリックすると、下記のScriptが実行されます。
+When you click the buy button, the following script will be executed.
 
 ```js
-// nodejs/views/sample/checkoutReview.ejsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/views/sample/checkoutReview.ejs (Some parts have been modified for clarity.)
 
             :
     document.getElementById("purchaseButton").addEventListener('click', (e) => {
@@ -414,16 +418,16 @@ cartの情報を計算して金額を出し、またAmazon Pay APIより住所�
             :
 ```
 
-Ajaxにより、下記のServer側のCheckout Session Update APIが呼び出されます。  
+Ajax will call the following Server-side Checkout Session Update API.  
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-----------------------------
 // Checkout Session Update API
 //-----------------------------
 
-// 事業者側の受注番号の採番
+// Numbering of the order number on the business side
 const newMerchantReferenceId = function() {
     let currentNumber = 1;
     return function() {
@@ -431,13 +435,14 @@ const newMerchantReferenceId = function() {
     }
 } ();
 
+
 app.post('/sample/checkoutSession', async (req, res) => {
     let order = JSON.parse(req.cookies.session);
     const payload = await updateCheckoutSession({merchantReferenceId: newMerchantReferenceId(),
-        merchantStoreName: "MY-SHOP", noteToBuyer: "Thank you!", customInformation: "This isn't shared with Buyer", ...order});    
+        merchantStoreName: "MY-SHOP", noteToBuyer: "Thank you!", customInformation: "This isn't shared with Buyer", . .order});    
     order.checkoutSession = JSON.parse(payload.body);
 
-    // Note: 一般的には受注情報はSessionやDBなどを使ってServer側に保持しますが、本サンプルではシンプルにするためにCookieを使用しています
+    // Note: In general, order information is kept on the Server side using Session or DB, but this sample uses Cookie for simplicity.
     res.cookie('session', JSON.stringify(order), {secure: true});
 
     res.writeHead(200, {'Content-Type': 'application/json; charset=UTF-8'});
@@ -454,7 +459,7 @@ async function updateCheckoutSession(data) {
         },
         paymentDetails: {
             paymentIntent: 'Authorize',
-            canHandlePendingAuthorization: false,
+            paymentIntent: 'Authorize', paymentIntent: 'Authorize', canHandlePendingAuthorization: false,
             chargeAmount: {
                 amount: '' + data.chargeAmount,
                 currencyCode: "JPY"
@@ -472,14 +477,14 @@ async function updateCheckoutSession(data) {
 }
 ```
 
-Amazon PayのAPIを使って、決済に必要な購入金額や事業者側の受注番号等の情報と、支払い処理ページ(後述)で自動的にリダイレクトされるURLを指定して、checkoutSessionに対してupdateしています。  
-この、「支払い処理ページで自動的にリダイレクトされるURL」ですが、Browserの場合は直接ThanksページのURLを、iOS及びAndroidの場合は中継用ページ(後述)へのURLを、それぞれ指定します。
-Amazon PayのAPIからの戻り値は、そのままCheckout Session Update APIのResponseとして返却します。  
+Using Amazon Pay's API, we update the checkoutSession with information such as the purchase amount and the order number of the business, which are required for payment, and the URL that will be automatically redirected on the payment processing page (see below).  
+As for the "URL to be automatically redirected on the payment processing page," in the case of Browser, specify the URL of the Thanks page directly, and in the case of iOS and Android, specify the URL to the page for relay (see below).
+The return value from the Amazon Pay API is directly returned as a Response of the Checkout Session Update API.  
 
-AjaxのResponseが返ってくると、下記が実行されます。
+When the Ajax Response is returned, the following will be executed.
 
 ```js
-// nodejs/views/sample/checkoutReview.ejsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/views/sample/checkoutReview.ejs (Some parts have been modified for clarity.)
 
             :
     document.getElementById("purchaseButton").addEventListener('click', (e) => {
@@ -490,7 +495,7 @@ AjaxのResponseが返ってくると、下記が実行されます。
             function(json) { //success
                 if(json.webCheckoutDetails.amazonPayRedirectUrl) {
                     if(window.androidApp) {
-                        // Androidの場合
+                        //for Android
                         coverScreen();
                         androidApp.auth(json.webCheckoutDetails.amazonPayRedirectUrl);
                     } else if(window.webkit && webkit.messageHandlers && webkit.messageHandlers.iosApp) {
@@ -511,16 +516,17 @@ AjaxのResponseが返ってくると、下記が実行されます。
     });
 ```
 
-WebViewに渡されたCallback Objectの存在チェックにより、クライアントの環境を判定して対応する処理を実行します。  
-今回はAndroidなので、下記が実行されます。
+By checking the existence of the Callback Object passed to the WebView, the client environment is determined and the corresponding process is executed.  
+In this case, since we are using Android, the following will be executed.
+
 ```js
                         androidApp.auth(json.webCheckoutDetails.amazonPayRedirectUrl);
 ```
 
-これにより、文字列「auth」とCheckout Session Update APIのResponseに含まれていたURLをパラメタとして、Native側の下記の処理が実行されます。  
+This will execute the following process on the Native side, using the string "auth" and the URL included in the Checkout Session Update API Response as parameters.  
 
 ```java
-// MainActivity.java より抜粋
+// Excerpt from MainActivity.java
 
     @JavascriptInterface
     public void auth(String url) {
@@ -529,62 +535,64 @@ WebViewに渡されたCallback Objectの存在チェックにより、クライ�
     }
 ```
 
-「invokeAuthorizePage」は下記です。
+The "invokeAuthorizePage" is as follows.
 
 ```java
-// MainActivity.java より抜粋
+// Excerpt from MainActivity.java
 
     void invokeAuthorizePage(Context context, String url) {
         invokeSecureWebview(context, url);
     }
 ```
 
-以上により、Amazon Pay APIのcheckoutSession更新処理の戻り値に含まれていたURLを、Secure WebViewで開くことができます。  
+With the above, you can open the URL included in the return value of the Amazon Pay API checkoutSession update process with Secure WebView.  
 
-## 支払い処理ページ
+## Payment processing page
 
 <img src="docimg/payment.png" width="400">  
 
-上記Amazon Pay APIより渡されたURLに対してアクセスすると、支払い処理ページ(スピナーページとも呼ばれます)が表示されます。  
-この画面が表示されている間、Amazon側ではServer側で与信を含む支払いの処理が行われており、エラーハンドリングも含めてこちらの画面で処理されています。  
-支払いの処理が終わると、「購入ボタンクリック時の処理」で指定した中継用ページへのURLに自動的にリダイレクトされます。  
+When you access the URL passed from the Amazon Pay API above, the payment processing page (also called the spinner page) will be displayed.  
+While this screen is being displayed, Amazon is processing the payment, including credit, on the Server side, and error handling is also being handled on this screen.  
+When the payment process is complete, you will be automatically redirected to the URL for the relay page specified in "Processing when clicking the purchase button".  
 
-### 中継用ページ
-中継用ページは下記のようになっています。  
+### Relay page
+The relay page looks like the following.  
 
 ```html
-<!-- nodejs/static/dispatcher.html より抜粋 -->
+<! -- excerpt from nodejs/static/dispatcher.html -->
     :
 <script type="text/javascript" charset="utf-8">
     function getURLParameter(name, source) {
-        return decodeURIComponent((new RegExp('[?|&amp;|#]' + name + '=' +
-                        '([^&;]+?)(&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
+        return decodeURIComponent((new RegExp('[? |&amp;|#]' + name + '=' +
+                        '([^&;]+?)') (&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
     }
 
     const client = getURLParameter("client", location.search);
-    location.href = client === 'iosApp' 
+    location.href = client === 'IOSApp'
         ? 'amazonpay-ios-v2://thanks'
         : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end;';
-</script>
+</script
 
 <body></body>
 </html>
 ```
 
-ここではIntentを使って、JavaScriptよりアプリを起動しています。  
-Intentについての詳細については、[こちら](./README_swv2app.md)をご参照下さい。  
-Applinksとは違い、Intentでは間違って悪意のあるアプリが起動してしまう可能性がゼロではないため、ここでは「amazonCheckoutSessionId」のようなセンシティブな情報は渡さないようにします。  
 
-## Thanksページ
+
+Here, we use Intent to launch the application from JavaScript.  
+For more information about Intent, please refer to [here](. /README_swv2app.md).  
+Unlike Applinks, there is no possibility of accidentally launching a malicious app with Intent, so we do not pass sensitive information such as "amazonCheckoutSessionId" here.  
+
+## Thanks page
 
 <img src="docimg/thanks.png" width="600">  
 
-### Intentにより起動されるNativeの処理
+### Native processing triggered by Intent
 
-上記Intentにより起動されるNativeの処理は、下記になります。
+The following is the Native process invoked by the above Intent.
 
 ```java
-// AmazonPayActivity.java より抜粋
+// Excerpt from AmazonPayActivity.java
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -599,26 +607,26 @@ Applinksとは違い、Intentでは間違って悪意のあるアプリが起動
             MainActivity.webviewUrl = "/sample/thanks";
         }
 
-        // 本Activityのfinish. (この後、MainActivity#onResumeに処理が移る)
-        this.finish();
+        // This Activity's finish. (After this, the process will be moved to MainActivity#onResume)
+        This.finish();
     }
 ```
 
-ThanksページのURLをMainActivityに設定します。  
-そして、AmazonPayActivityをfinishします。これにより、すぐ下のMainActivity#onResumeに処理が移ります。  
+Set the URL of the Thanks page to MainActivity.  
+Then, we finish the AmazonPayActivity. This will move the process to MainActivity#onResume just below.  
 
-### Thanksページの読み込み
+### Load the Thanks page.
 
-MainActivityでは、onResumeの中の下記の処理が起動します。  
+In MainActivity, the following process in onResume will be invoked.  
 
 ```java
-// MainActivity.javaより抜粋　(見やすくするため、一部加工しています。)
+// Excerpt from MainActivity.java (Some parts have been modified for clarity.)
 
     protected void onResume() {
         super.onResume();
 
         String url = webviewUrl;
-        if (url != null) {
+        if (url ! = null) {
             webviewUrl = null;
             webView.loadUrl("javascript:loadUrl('" + url + "')");
         } else {
@@ -626,18 +634,18 @@ MainActivityでは、onResumeの中の下記の処理が起動します。
     }
 ```
 
-WebViewではこの時点で購入ページが表示されており、上記にて下記のJavaScriptが起動してThanksページの読み込みが開始します。  
+At this point, the purchase page is displayed in WebView, and the following JavaScript is triggered above to start loading the Thanks page.  
 
 ```js
     function loadUrl(url) {
         location.href = url;
     }
-```
+````
 
-Server側では下記が実行されます。
+On the Server side, the following will be executed.
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------
 // Thanks Screen
@@ -654,16 +662,16 @@ app.get('/sample/thanks', async (req, res) => {
 });
 ```
 
-Amazon Pay APIを使ってcheckoutSessionを完了し、thanks画面を表示しています。  
-本サンプルアプリの一連の流れとしては、以上となります。
+The checkoutSession is completed using the Amazon Pay API, and the thanks screen is displayed.  
+This is the end of the series of steps for this sample application.
 
-## その他
+## Other.
 
-### Secure WebView起動時の対処
-WebViewからSecure WebView起動処理をJavaScriptで呼び出すとき、下記のように直前で「coverScreen」という、画面を真っ白にする関数を呼んでいます。  
+### What to do when starting Secure WebView
+When calling the Secure WebView startup process in JavaScript from WebView, a function called "coverScreen" is called immediately before as shown below to make the screen blank.  
 
 ```html
-<!-- nodejs/views/sample/cart.ejsより抜粋　(見やすくするため、一部加工しています。) -->
+<! -- Excerpt from nodejs/views/sample/cart.ejs (Some parts have been modified for clarity.) --> <!
                 :
 <body data-gr-c-s-loaded="true">
 <div id="white_cover" style="width:100%; height:100vh; background-color:#fff; position:relative; z-index:1000; display:none;"></div>
@@ -671,11 +679,11 @@ WebViewからSecure WebView起動処理をJavaScriptで呼び出すとき、下�
 <script type="text/javascript" charset="utf-8">
                 :
         node.addEventListener('click', (e) => {
-            coverScreen(); // ← ここで呼んでいる
+            coverScreen(); // ← we call it here
             if(client === 'androidApp') {
                 androidApp.login();
             } else {
-                webkit.messageHandlers.iosApp.postMessage({op: 'login'}); // ← Secure WebView起動処理
+                webkit.messageHandlers.iosApp.postMessage({op: 'login'}); // ← Secure WebView startup process
             }
         });
                 :
@@ -690,18 +698,18 @@ WebViewからSecure WebView起動処理をJavaScriptで呼び出すとき、下�
                 :
 ```
 
-もしこの関数を呼ばなかった場合、Secure WebViewがCloseされるときの画面は、下記のような動きになります。  
+If you don't call this function, your screen will look like the following when Secure WebView is closed.  
 <img src="docimg/nocover-version.gif" width="300">  
-WebViewの画面の遷移が終わるまでの間、Secure WebView起動前の画面が表示されるため、不自然に見えてしまいます。  
+Since the screen before Secure WebView is displayed until the WebView screen transition is completed, it looks unnatural.  
 
-Secure WebView起動直前に「coverScreen」を呼び出しておくことで、下記のように自然な見え方にすることができます。  
-<img src="docimg/cover-version.gif" width="300">  
+By calling "coverScreen" just before Secure WebView starts, you can make it look more natural as shown below.  
+<img src="docimg/cover-version.gif" width="300">.  
 
-なおこのままだと、ユーザがSecure WebViewの左上の「Done」をタップしてWebViewに戻ってきた場合には、画面が真っ白なままになってしまいます。  
-そこでその場合には、MainActivity#onResumeの下記コードにて「uncoverScreen」を呼んで、白い画面を元に戻しています。  
+If this is not done, when the user returns to the WebView by tapping the "Done" button in the upper left corner of the Secure WebView, the screen will remain blank.  
+In that case, we call "uncoverScreen" in the following code of MainActivity#onResume to restore the white screen.  
 
 ```swift
-// MainActivityより抜粋
+// Excerpt from MainActivity
 
     @Override
     protected void onResume() {
@@ -712,25 +720,25 @@ Secure WebView起動直前に「coverScreen」を呼び出しておくことで�
     }
 ```
 
-本サンプルでは「coverScreen」は単に真っ白な画面を表示していますが、こちらは各モバイルアプリのデザインや方針などに応じて、より自然に見えるものを表示することをお勧めいたします。  
+In this sample, "coverScreen" simply displays a blank screen, but we recommend that you display something that looks more natural here, depending on the design and policies of each mobile application.  
 
 
-### AndroidでWebViewを動作させるための設定
-AndroidのWebViewは制限がかなり多く、デフォルトの状態では本サンプルアプリを動かすことができません。  
-動作させるために行っているカスタマイズについて、説明します。
+### Setting up WebView to work on Android
+Android's WebView has many limitations, and this sample app cannot be run in its default state.  
+This section will explain the customization we are doing to make it work.
 
-まずは、WebViewを生成してページを読み込む処理で行っているカスタマイズです。  
+First, let's look at the customization done in the process of creating the WebView and loading the page.  
 
 ```java
-// MainActivityから抜粋。日本語の説明を追加しています。
+// Extracted from MainActivity. I've added Japanese explanation.
 
-        // enable JavaScript - これは、JavaScriptを有効にする設定です。
+        // enable JavaScript - This is a setting to enable JavaScript.
         webView.getSettings().setJavaScriptEnabled(true);
 
-        // enable Web Storage - これは、Web Storageを有効にする設定です。
+        // enable Web Storage - This is the setting to enable Web Storage.
         webView.getSettings().setDomStorageEnabled(true);
 
-        // allow redirect by JavaScript - これは、JavaScriptによる画面遷移を有効にする設定です。
+        webView.getSettings().setDomStorageEnabled(true); // allow redirect by JavaScript - This is the setting to enable screen transition by JavaScript.
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -738,7 +746,7 @@ AndroidのWebViewは制限がかなり多く、デフォルトの状態では本
             }
         });
 
-        // redirect console log into AndroidStudio's Run console. - こちらは、JavaScriptで出力したログをRunコンソールに転送する設定で、デバッグ用です。
+        // redirect console log into AndroidStudio's Run console. - This is a setting to forward the log output by JavaScript to the Run console for debugging.
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(ConsoleMessage cslMsg) {
@@ -750,52 +758,53 @@ AndroidのWebViewは制限がかなり多く、デフォルトの状態では本
         });
 ```
 
-また、[本サンプルアプリのインストール](./README_install.md)の「自己証明書のインストール」でインストールした自己証明書も、デフォルトでは認識しません。  
-なので、resディレクトリの下にxmlというディレクトリを作成し、そちらに開発環境でのみユーザがインストールした証明書を認識させる設定ファイルを作成します。  
+Also, the self-certificate installed in [Installation of this sample application](. /README_install.md) will also not be recognized by default.  
+So, create a directory named xml under the res directory, and create a configuration file there to recognize the user-installed certificate only in the development environment.  
 
 ```xml
-<!-- network_security_config.xmlより抜粋 -->
-<?xml version="1.0" encoding="utf-8"?>
+<! -- excerpt from network_security_config.xml -->
+<?xml version="1.0" encoding="utf-8"? >
 <network-security-config>
-    <debug-overrides> <!-- android:debuggable = trueの時に有効. 参考: https://developer.android.com/training/articles/security-config#debug-overrides -->
+    <debug-overrides> <! -- enabled when android:debuggable = true. Reference: https://developer.android.com/training/articles/security-config#debug-overrides -->
         <trust-anchors>
-            <certificates src="user"/> <!-- ユーザがインストールした証明書を信用させる設定. 参考: https://developer.android.com/training/articles/security-config#certificates -->
-        </trust-anchors>
-    </debug-overrides>
+            <certificates src="user"/> <! -- Configure to trust user-installed certificates. Reference: https://developer.android.com/training/articles/security-config#certificates -->
+        </trust-anchors> <certificates src="user"/> <!
+    </debug-overrides>.
 </network-security-config>
 ```
 
-こちらを、AndroidManifest.xmlにて下記のように指定して読み込ませています。
+This is loaded in AndroidManifest.xml with the following specification.
 ```xml
-    <uses-permission android:name="android.permission.INTERNET" /> ← ※ こちらの指定もないと、WebViewがInternetからページを読み込まない！
+    <uses-permission android:name="android.permission.INTERNET" /> ← * If you don't specify this, WebView won't load the page from Internet!
 
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:networkSecurityConfig="@xml/network_security_config" ← ここ！
+        android:networkSecurityConfig="@xml/network_security_config" ← here!
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
     </application>
 ```
 
-# Amazon Payの実装方法 - Nativeアプリ編
+# How to implement Amazon Pay - Native App.
 
-## カートページ or 商品ページ
+## Cart Page or Product Page
 <img src="docimg/cart.png" width="500">  
 
-### 「Amazon Payボタン」画像の配置
+### Placement of the "Amazon Pay Button" image
 
-Amamzon Payで支払いができることをユーザに視覚的に伝えるのには、Amazon Payボタンを画面に表示するのが効果的です。  
-Nativeアプリでは本物のAmazon Payボタンを配置できないので、画像を代わりに配置します。
+An effective way to visually communicate to users that they can pay with Amamzon Pay is to display an Amazon Pay button on the screen.  
+Since the Native app does not allow the placement of a real Amazon Pay button, we will place an image instead.
 
-この時指定する「Amazon Payボタン」画像は「./nodejs/static/img/button_images」の下にあるものから選ぶようにして下さい。なお、本番環境向けにファイル名が「Sandbox_」で始まるものを指定しないよう、ご注意下さい。  
+The "Amazon Pay button" image to be specified in this case is ". /nodejs/static/img/button_images". Please be careful not to specify a file name that begins with "Sandbox_" for production environments.  
 
-### 「Amazon Payボタン」画像クリック時の、Secure WebViewの起動処理
-上記、「Amazon Payボタン」画像がクリックされたときには、下記のようなコードを呼びます。  
+### Start Secure WebView when the Amazon Pay button image is clicked.
+When the "Amazon Pay Button" image above is clicked, the following code is called.  
+
 ```java
-// MainActivity.javaから抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from MainActivity.java (Some parts have been modified for clarity.)
 
     static volatile String token = null;
         :
@@ -807,53 +816,53 @@ Nativeアプリでは本物のAmazon Payボタンを配置できないので、�
     private void invokeSecureWebview(Context context, String url) {
         CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder().build();
 
-        // 起動するBrowserにChromeを指定
-        // Note: Amazon Payでは他のブラウザがサポート対象に入っていないため、ここではChromeを指定している.
-        // [参考] https://pay.amazon.com/jp/help/202030010
-        // もしその他のChrome Custom Tabs対応のブラウザを起動する必要がある場合には、下記リンク先ソースなどを参考に実装する.
-        // [参考] https://github.com/GoogleChrome/custom-tabs-client/blob/master/shared/src/main/java/org/chromium/customtabsclient/shared/CustomTabsHelper.java#L64
+        // Specify Chrome as the Browser to launch
+        Build(); // Specify Chrome as the Browser to launch // Note: Chrome is specified here because Amazon Pay does not support other browsers.
+        // [Reference] https://pay.amazon.com/jp/help/202030010
+        // If you need to launch other browsers that support Chrome Custom Tabs, please refer to the following source code for implementation.
+        // [Reference] https://github.com/GoogleChrome/custom-tabs-client/blob/master/shared/src/main/java/org/chromium/customtabsclient/shared/ CustomTabsHelper.java#L64
         tabsIntent.intent.setPackage("com.android.chrome");
 
-        // 別のActivityへの遷移時に、自動的にChrome Custom Tabsを終了させるためのフラグ設定.
+        // Set the flag to automatically exit Chrome Custom Tabs when transitioning to another Activity.
         tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
-        // Chrome Custom Tabs終了時に、Historyとして残らないようにするためのフラグ設定.
-        tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+        // Set the flag so that it does not remain as History when Chrome Custom Tabs is closed.
+        Intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
 
-        // Chrome Custom Tabsの起動
+        // Launch Chrome Custom Tabs.
         tabsIntent.launchUrl(context, Uri.parse(url));
     }
 ```
 
-URLを指定して、Chrome Custom Tabs(Android側のSecure WebView)を起動しているのが分かると思います。  
-なお、UUID(version 4)を生成して「token」という名前で、Native側のFieldとURLのパラメタとして設定していますが、こちらの理由については後述します。  
+You can see that we are launching Chrome Custom Tabs (Secure WebView on the Android side) by specifying the URL.  
+In addition, we have generated a UUID (version 4) and named it "token" and set it as a parameter to the Field and URL on the Native side, but the reason for this is explained later.  
 
-## 自動的にAmazonログイン画面に遷移させるページ
+## Page that automatically transitions to the Amazon login screen
 
 <img src="docimg/appLogin.png" width="500">  
 
-こちらの画面ではAmazon Payボタンを裏で出力し、こちらを自動的にJavaScriptでClickすることで、Amazonログイン画面に遷移させています。  
+This page outputs the Amazon Pay button behind the scenes, and automatically transitions to the Amazon login screen by clicking this button with JavaScript.  
 
-### Server側のAmazon Payボタン出力準備
-Amazon Payボタンを出力するための準備として、Server側にてAmazon Payボタンの出力に必要なpayloadと signatureの生成、その他の設定値の受け渡しを行います。  
+### Preparing to output the Amazon Pay button on the server side
+In order to prepare for the output of the Amazon Pay button, we will generate the payload and signature necessary for the output of the Amazon Pay button on the server side, and pass in the other configuration values.  
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------
 // App Login Screen
 //-------------------
 
 app.get('/appLogin', async (req, res) => {
-    // ※ req.queryには、上記ViewControllerで指定されたURLパラメタが入る
-    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`));
+    // * req.query will contain the URL parameter specified in ViewController above.
+    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query. client}.html?token=${req.query.token}`));
 });
 
 function calcConfigs(url) {
     const payload = createPayload(url);
     const signature = apClient.generateButtonSignature(payload);
-    return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId};
+    return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId}
 }
 
 function createPayload(url) {
@@ -866,13 +875,13 @@ function createPayload(url) {
 }
 ```
 
-指定されているURLの「https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/...」 はAmazon Payへのログイン & 住所・支払い方法の選択後のリダイレクト先になります。  
-このURLは後述の「Applinks」という技術でSecure WebViewからアプリを起動するために使用されます。  
+The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/... in the specified URL will be the redirect destination after logging in to Amazon Pay & selecting the address and payment method.  
+This URL is used to launch the app from Secure WebView with the "Applinks" technology described below.  
 
-これらの値が「appLogin.ejs」にパラメタとして渡され、HTML & CSS & JavaScriptが生成されます。  
+These values are passed as parameters to "appLogin.ejs" to generate the HTML, CSS & JavaScript.  
 
 ```html
-<!-- nodejs/views/appLogin.ejsより抜粋 (見やすくするため、一部加工しています。) -->
+<! -- Excerpt from nodejs/views/appLogin.ejs (Some parts have been modified for clarity.) --> :.
 
     :
 <div class="hidden">
@@ -892,7 +901,7 @@ function createPayload(url) {
         createCheckoutSessionConfig: {
             payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (※ HTML Escapeをしないで出力する)
             signature: '<%= signature %>', // signature generated in step 3
-            publicKeyId: '<%= publicKeyId %>' 
+            publicKeyId: '<%= publicKeyId %>'
         }
     });
 
@@ -902,163 +911,195 @@ function createPayload(url) {
 </script>
 ```
 
-上記のようにAmazon Payボタンを生成してJavaScriptでclickさせることで、自動的にAmazon Payのログイン画面に遷移させています。  
-こちらのファイルは[EJS](https://ejs.co/)というTemplate Engineを使って作成されていますが、構文はTemplate Engineとしては一般的なものであるため、比較的簡単に理解できるかと思います。
+:
+<div class="hidden">
+<div id="AmazonPayButton"></div>.
+</div>
 
-## Amazon側の画面からのリダイレクトによる、Applinksの発動
+<script src="https://static-fe.payments-amazon.com/checkout.js"></script>
+<script type="text/javascript" charset="utf-8">
+amazon.Pay.renderButton('#AmazonPayButton', {
+    merchantId: '<%= merchantId %>',
+    ledgerCurrency: 'JPY', // Amazon Pay account ledger currency
+    sandbox: true, // dev environment
+    checkoutLanguage: 'ja_JP', // render language
+    productType: 'PayAndShip', // checkout type
+    placement: 'Cart', // button placement
+    buttonColor: 'Gold',
+    createCheckoutSessionConfig: {
+        payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (* output without HTML Escape)
+        signature: '<%= signature %>', // signature generated in step 3
+        publicKeyId: '<%= publicKeyId %>'
+    }
+});
+
+setTimeout(() => {
+    document.getElementById("AmazonPayButton").click();
+}, 0);
+</script>
+```
+
+By generating an Amazon Pay button and having it click in JavaScript as shown above, we automatically transition to the Amazon Pay login screen.  
+This file is created using Template Engine called [EJS](https://ejs.co/), but the syntax is common for Template Engine, so it should be relatively easy to understand.
+
+## Triggering Applinks by redirecting from Amazon's screen
 
 <img src="docimg/applinks.png" width="500">  
 
-### Applinksについて
-Applinksについての詳細については、[こちら](./README_swv2app.md)に記載しております。
+### About Applinks
+For more information about Applinks, see [here](. /README_swv2app.md).
 
-Applinksの基本的な発動条件は「Chrome/Chrome Custom Tabs等でLinkをタップする」ことですが、ServerからのRedirectでも発動することがあります。  
-Applinksが発動しなかった場合には、指定されたURLに存在するファイルが通常通りに表示されます。  
+The basic condition for triggering Applinks is "tapping the Link in Chrome/Chrome Custom Tabs, etc.", but it may also be triggered by a Redirect from the Server.  
+If Applinks is not triggered, the files existing at the specified URL will be displayed as usual.  
 
-### 救済ページを使った2段構えのApplinksの発動
-本サンプルでは、Amazon側のページでログイン＆住所・支払い方法の選択をしたあとのリダイレクトでApplinksが発動するURLを指定していますが、上記の理由により、ここでは発動しない可能性もあります。  
+### Triggering two-stage Applinks with a rescue page
+In this sample, we have specified a URL where Applinks will be triggered by a redirect after logging in and selecting an address and payment method on the Amazon page, but for the reasons mentioned above, there is a possibility that Applinks will not be triggered here.  
 
-本サンプルではその場合の備えとして、発動しなかった場合には再度Applinksが発動するURLへのリンクを持つ、救済ページに自動的に遷移するように作られています。  
-ここではその仕組を説明します。  
+However, for the reasons mentioned above, there is a possibility that Applinks will not be triggered here. As a precaution, this sample is designed to automatically redirect the user to a relief page with a link to the URL where Applinks will be triggered again if it is not triggered.  
+Here's how it works.  
 
-「自動的にAmazonログイン画面に遷移させるページ」で登場した、Applinksを発動させるURLのAndroid版は、下記になります。  
+The Android version of the URL that triggers Applinks, which appeared in "The page that automatically transitions to the Amazon login screen," is as follows  
 https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-androidApp.html?token=XXXXXXXX
 
-上記でも書いたとおり、Applinksが発動しなかった場合には、指定されたURLに存在するファイルが表示されます。  
-このURLの先には下記の内容のHTMLファイルが置かれております。  
+As mentioned above, if Applinks is not triggered, the file that exists at the specified URL will be displayed.  
+An HTML file with the following contents is placed at the end of this URL.  
+
 ```html
-<!-- nodejs/linksの下にも同じものが置かれています。 -->
+<! -- The same thing is placed under nodejs/links. -->
 
 <html>
-    <script>
-        location.href = "https://10.0.2.2:3443/static/next.html" + location.search;
-    </script>
+<script>
+    location.href = "https://10.0.2.2:3443/static/next.html" + location.search;
+</script>
 </html>
 ```
 
-こちらはファイルにアクセス時に指定されたURLパラメタを付与した上で、「next.html」にリダイレクトしています。  
-Note: ↑はlocal環境用なのでリダイレクト先が「https://10.0.2.2:3443/static/next.html 」になっていますが、こちらは本番・各テスト等の環境に応じて変更する必要があります。  
-「next.html」の中身が下記です。  
+This redirects the file to "next.html" with the URL parameter specified when the file was accessed.  
+Note: The above is for a local environment, so the redirect is set to "https://10.0.2.2:3443/static/next.html", but you may need to change this depending on your environment, such as production or testing.  
+The content of "next.html" is as follows.  
 ```html
-<!-- nodejs/static/next.htmlより抜粋 -->
+<! -- excerpt from nodejs/static/next.html -->
 
 <body data-gr-c-s-loaded="true">
 <div class="container">
-    <h3 class="my-4">Amazon Login 処理完了</h3>
-    「次へ」ボタンをタップして下さい。<br>
-    <br>
-    <a id="nextButton" href="#" class="btn btn-info btn-lg btn-block">
-        次　へ
-    </a>
+<h3 class="my-4">Amazon Login processing completed</h3>.
+Please tap the "Next" button. <br>
+<br>
+<a id="nextButton" href="#" class="btn btn-info btn-lg btn-block">
+    Next
+</a>
 </div>
 <script>
-    document.getElementById("nextButton").href = 
-        "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" + location.search;
+document.getElementById("nextButton").href =
+    "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" + location.search;
 </script>
 </body>
 ```
 
-アクセス時に指定されたURLパラメタを付与したApplinksを発動するURLを「id="nextButton"」のリンクに指定しております。  
-この仕組みにより、Applinksが発動しなかった場合にはこちらの画面が表示されます。この「次へ」のLinkをユーザがタップすることで、確実に条件を満たしてApplinksを発動させることができます。  
+The URL that triggers Applinks with the URL parameter specified at the time of access is specified in the "id="nextButton"" link.  
+With this mechanism, if Applinks is not triggered, this screen will be displayed. By tapping on the "next" link, the user can ensure that the conditions are met and the Applinks are triggered.  
 
-## 購入ページ
+## Purchase page
 
 <img src="docimg/purchase.png" width="650">  
 
-### tokenチェックとViewControllerへの遷移先URLの設定
-Applinksにより起動される処理は、下記になります。  
+### token check and setting the destination URL to ViewController
+The process invoked by Applinks is as follows.  
 
 ```java
-// AmazonPayActivity.javaより抜粋　(見やすくするため、一部加工しています。)
+// Excerpt from AmazonPayActivity.java (Some parts have been modified for clarity.)
 
-    protected void onCreate(Bundle savedInstanceState) {
-            :
-        Intent intent = getIntent();
-        if (intent.getScheme().equals("https")) {
-            String appLinkAction = intent.getAction();
-            Uri appLinkData = intent.getData();
-            Log.d("[AppLink]", appLinkAction);
-            Log.d("[AppLink]", "" + appLinkData);
+protected void onCreate(Bundle savedInstanceState) {
+        :
+    Intent intent = getIntent();
+    if (intent.getScheme().equals("https")) {
+        String appLinkAction = intent.getAction();
+        Uri appLinkData = intent.getData();
+        Log.d("[AppLink]", appLinkAction);
+        Log.d("[AppLink]", "" + appLinkData);
 
-            // URLパラメタのパース
-            Map<String, String> map = new HashMap<>();
-            for (String kEqV : appLinkData.getEncodedQuery().split("&")) {
-                String[] kv = kEqV.split("=");
-                map.put(kv[0], kv[1]);
-            }
-
-            if (MainActivity.token.equals(map.get("token"))) { // tokenの一致判定
-                // 一致した場合には、購入ページを構築して表示
-            } else {
-                // 不一致の場合には不正な遷移であるため、エラー処理
-            }
-
-        } else {
-            :
+        // Parse the URL parameter
+        Map<String, String> map = new HashMap<>();
+        for (String kEqV : appLinkData.getEncodedQuery().split("&")) {
+            String[] kv = kEqV.split("=");
+            map.put(kv[0], kv[1]);
         }
 
-        // 本Activityのfinish. (この後、MainActivity#onResumeに処理が移る)
-        this.finish();
+        if (MainActivity.token.equals(map.get("token"))) { // determine token match
+            // If a match, build and display the purchase page
+        } else {
+            // if there is a mismatch, the transition is invalid and an error will be handled
+        }
+
+    } else {
+        :
     }
+
+    // This Activity's finish. (After this, the process will be moved to MainActivity#onResume)
+    This.finish();
+}
 ```
-本サンプルでは、Secure WebView(Chrome Custom Tabs)は他のActivityが起動したら自動的にCloseされるよう設定されているため、このActivityが起動した時点で既にCloseされています。
 
-最初に、Applinks発動のURLに指定されていたURLパラメタを取得します。  
+In this sample, Secure WebView (Chrome Custom Tabs) is already closed when this Activity is launched, because it is set to automatically close when another Activity is launched.
 
-その後、「『Amazon Payボタン』画像クリック時の、Secure WebViewの起動処理」でMainActivityに保持したtokenと、Secure WebViewから受け渡されたtokenの一致判定を行っています。  
-このtokenの判定を行うことで、不正な遷移でこの処理が起動された場合に、それを検出してエラーとできるようになります。
+First, get the URL parameter that was specified in the URL that triggered the Applinks.  
 
-例えば、悪いユーザがSecure WebViewを起動する時の「自動的にAmazonログイン画面に遷移させるページ」へのURLを読み取って、メールなどで他のユーザに送ったとします。  
-送りつけられたユーザがAndroid端末でメールのURLのリンクをクリックした場合、Chromeが立ち上がってAmazon Payログインに遷移してしまう可能性があります。  
-もしそのままAmazon Payにログインして、住所・支払い方法選択も実施した場合、ChromeならApplinksも発動してしまいますので、同アプリをインストールしていればその後の購入フローも実行できることになってしまいます。  
-画面のFlowによってはこれが大きな問題になる可能性もあるため、本サンプルアプリでは念のためにtokenチェックを行っております。  
+After that, it judges whether the token passed from Secure WebView matches the token stored in MainActivity in "Processing the start of Secure WebView when the 'Amazon Pay Button' image is clicked".  
+By judging the token, we can detect and raise an error if this process is launched with an invalid transition.
 
-tokenチェックにて問題がなかった場合には、購入ページを構築して表示します。  
-購入ページには配送先や金額などの情報が必要であるため、Server側の下記のような処理を呼び出してこれらを取得する必要があります。
+For example, let's say a bad user reads the URL to the "page that automatically transitions to the Amazon login screen" when launching Secure WebView, and sends it to another user via email.  
+If the user who was sent the URL clicks on the link in the email on their Android device, Chrome may launch and take them to the Amazon Pay login.  
+If the user logs in to Amazon Pay and selects an address and payment method, Chrome will also trigger Applinks, which means that if the user has installed the app, they will be able to execute the subsequent purchase flow.  
+Since this may become a big problem depending on the screen flow, we have performed a token check in this sample app just in case.  
+
+If there is no problem with the token check, a purchase page will be built and displayed.  
+Since the purchase page needs information such as shipping address and amount, we need to call the following process on the server side to get these information.
+
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified to make it easier to read.)
 
 //-------------------------
 // Checkout Review Screen
 //-------------------------
 app.get('/sample/checkoutReview', async (req, res) => {
-    // 受注情報
+    // Order information
     let order = {host: req.headers.host, amazonCheckoutSessionId: req.query.amazonCheckoutSessionId,
         client: req.cookies.client, hd8: req.cookies.hd8, hd10: req.cookies.hd10, items: []};
     order.items.push({id: 'item0008', name: 'Fire HD8', price: 8980, num: parseInt(order.hd8)});
     order.items.push({id: 'item0010', name: 'Fire HD10', price: 15980, num: parseInt(order.hd10)});
-    order.items.forEach(item => item.summary = item.price * item.num); // 小計
-    order.price = order.items.map(item => item.summary).reduce((pre, cur) => pre + cur); // 合計金額
-    order.chargeAmount = Math.floor(order.price * 1.1); // 税込金額
+    order.items.forEach(item => item.summary = item.price * item.num); // Subtotal
+    order.price = order.items.map(item => item.summary).reduce((pre, cur) => pre + cur); // total amount
+    order.chargeAmount = Math.floor(order.price * 1.1); // amount including tax
 
-    // Amazon Pay受注情報
-    const payload = await apClient.getCheckoutSession(req.query.amazonCheckoutSessionId, 
+    // Amazon Pay order information
+    const payload = await apClient.getCheckoutSession(req.query.amazonCheckoutSessionId,
         {'x-amz-pay-idempotency-key': uuid.v4().toString().replace(/-/g, '')});
     order.checkoutSession = JSON.parse(payload.body);
 
-    // Note: 一般的には受注情報はSessionやDBなどを使ってServer側に保持しますが、本サンプルではシンプルにするためにCookieを使用しています
+    // Note: In general, order information is kept on the Server side using Session or DB, but this sample uses Cookie for simplicity.
     res.cookie('session', JSON.stringify(order), {secure: true});
-    
-    // TODO ↓の部分はJSONなど、アプリで受け取りやすい形式のデータを返却するよう、修正する。
+
+    // TODO Modify the ↓ part to return data in a format that is easy for the app to receive, such as JSON.
     // res.render('sample/checkoutReview.ejs', order);
 });
 ```
 
-cartの情報を計算して金額を出し、またAmazon Pay APIより住所情報等を取得し、返却します。
 
-### 購入ボタンクリック時の処理
+Calculate the cart information to get the amount, and also get the address information etc. from Amazon Pay API and return it.
 
-購入ボタンをクリック時には、下記のようにServer側のCheckout Session Update APIが呼び出して、決済に必要な購入金額や事業者側の受注番号等の情報と、支払い処理ページ(後述)で自動的にリダイレクトされるURLを指定して、checkoutSessionに対してupdateする必要があります。
+### Processing when a purchase button is clicked
+
+When the purchase button is clicked, the Checkout Session Update API on the server side is called as shown below, and the necessary information for payment, such as the purchase amount and the order number of the business, and the URL that will be automatically redirected on the payment processing page (see below) are specified. CheckoutSession.
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-----------------------------
 // Checkout Session Update API
 //-----------------------------
 
-// 事業者側の受注番号の採番
+// Numbering of the order number on the business side
 const newMerchantReferenceId = function() {
     let currentNumber = 1;
     return function() {
@@ -1069,10 +1110,10 @@ const newMerchantReferenceId = function() {
 app.post('/sample/checkoutSession', async (req, res) => {
     let order = JSON.parse(req.cookies.session);
     const payload = await updateCheckoutSession({merchantReferenceId: newMerchantReferenceId(),
-        merchantStoreName: "MY-SHOP", noteToBuyer: "Thank you!", customInformation: "This isn't shared with Buyer", ...order});    
+        merchantStoreName: "MY-SHOP", noteToBuyer: "Thank you!", customInformation: "This isn't shared with Buyer", . .order});    
     order.checkoutSession = JSON.parse(payload.body);
 
-    // Note: 一般的には受注情報はSessionやDBなどを使ってServer側に保持しますが、本サンプルではシンプルにするためにCookieを使用しています
+    // Note: In general, order information is kept on the Server side using Session or DB, but this sample uses Cookie for simplicity.
     res.cookie('session', JSON.stringify(order), {secure: true});
 
     res.writeHead(200, {'Content-Type': 'application/json; charset=UTF-8'});
@@ -1089,7 +1130,7 @@ async function updateCheckoutSession(data) {
         },
         paymentDetails: {
             paymentIntent: 'Authorize',
-            canHandlePendingAuthorization: false,
+            paymentIntent: 'Authorize', paymentIntent: 'Authorize', canHandlePendingAuthorization: false,
             chargeAmount: {
                 amount: '' + data.chargeAmount,
                 currencyCode: "JPY"
@@ -1107,38 +1148,39 @@ async function updateCheckoutSession(data) {
 }
 ```
 
-この、「支払い処理ページで自動的にリダイレクトされるURL」ですが、モバイルアプリではNativeコードを起動させる必要があるため、中継用ページ(後述)へのURLを指定します。  
-Amazon PayのAPIからの戻り値は、本サンプルアプリではそのままCheckout Session Update APIのResponseとして返却しています。  
-リダイレクトする必要があるURLは下記になります。
+This "URL to be automatically redirected on the payment processing page" is the URL to the relay page (see below), because the mobile app needs to launch the Native code.  
+The return value from the Amazon Pay API is directly returned as a Response of the Checkout Session Update API in this sample app.  
+The URLs that need to be redirected are as follows.
+
 ```
 $.webCheckoutDetails.amazonPayRedirectUrl
 ```
 
-Nativeアプリ側でこのResponseを受け取ったら、上記のURLをパラメタとして下記の処理を実行します。  
+When the Native app receives this Response, it will execute the following process using the above URL as a parameter.  
 
 ```java
-// MainActivity.javaより抜粋
+// Excerpt from MainActivity.java
 
     void invokeAuthorizePage(Context context, String url) {
         invokeSecureWebview(context, url);
     }
 ```
 
-以上により、Amazon Pay APIのcheckoutSession更新処理の戻り値に含まれていたURLを、Secure WebViewで開くことができます。  
+With the above, you can open the URL included in the return value of the Amazon Pay API checkoutSession update process with Secure WebView.  
 
-## 支払い処理ページ
+## Payment processing page
 
 <img src="docimg/payment.png" width="400">  
 
-上記Amazon Pay APIより渡されたURLに対してアクセスすると、支払い処理ページ(スピナーページとも呼ばれます)が表示されます。  
-この画面が表示されている間、Amazon側ではServer側で与信を含む支払いの処理が行われており、エラーハンドリングも含めてこちらの画面で処理されています。  
-支払いの処理が終わると、「購入ボタンクリック時の処理」で指定した中継用ページへのURLに自動的にリダイレクトされます。  
+When you access the URL passed from the Amazon Pay API above, the payment processing page (also called the spinner page) will be displayed.  
+While this screen is displayed, Amazon is processing the payment, including credit, on the Server side, and error handling is also being handled on this screen.  
+When the payment process is complete, you will be automatically redirected to the URL for the relay page specified in "Processing when clicking the purchase button".  
 
-### 中継用ページ
-中継用ページは下記のようになっています。  
+### Relay page
+The relay page looks like the following.  
 
 ```html
-<!-- nodejs/static/dispatcher.html より抜粋 -->
+<! -- excerpt from nodejs/static/dispatcher.html -->
     :
 <script type="text/javascript" charset="utf-8">
     function getURLParameter(name, source) {
@@ -1147,7 +1189,7 @@ Nativeアプリ側でこのResponseを受け取ったら、上記のURLをパラ
     }
 
     const client = getURLParameter("client", location.search);
-    location.href = client === 'iosApp' 
+    location.href = client === 'iosApp'
         ? 'amazonpay-ios-v2://thanks'
         : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end;';
 </script>
@@ -1156,20 +1198,20 @@ Nativeアプリ側でこのResponseを受け取ったら、上記のURLをパラ
 </html>
 ```
 
-ここではIntentを使って、JavaScriptよりアプリを起動しています。  
-Intentについての詳細については、[こちら](./README_swv2app.md)をご参照下さい。  
-Applinksとは違い、Intentでは間違って悪意のあるアプリが起動してしまう可能性がゼロではないため、ここでは「amazonCheckoutSessionId」のようなセンシティブな情報は渡さないようにします。  
+Here, we use Intent to launch the application from JavaScript.  
+For more information about Intent, please refer to [here](. /README_swv2app.md).  
+Unlike Applinks, there is no possibility of accidentally launching a malicious app with Intent, so we do not pass sensitive information such as "amazonCheckoutSessionId" here.  
 
-## Thanksページ
+## Thanks page
 
 <img src="docimg/thanks.png" width="600">  
 
-### CustomURLSchemeにより起動されるNativeの処理
+### Native processing triggered by CustomURLScheme
 
-上記Intentにより起動されるNativeの処理は、下記になります。
+The Native process invoked by the above Intent is as follows.
 
 ```java
-// MainActivity.javaより抜粋
+// Excerpt from MainActivity.java
 
     protected void onCreate(Bundle savedInstanceState) {
             :
@@ -1179,19 +1221,19 @@ Applinksとは違い、Intentでは間違って悪意のあるアプリが起動
             :
         } else {
             Log.d("[Intent]", "intent received!");
-            // Thanksページを構築して表示
+            // Build and display the Thanks page.
         }
 
-        // 本Activityのfinish. (この後、MainActivity#onResumeに処理が移る)
-        this.finish();
+        // finish of this Activity. (After this, the process will be moved to MainActivity#onResume)
+        This.finish();
     }
 ```
 
-Intentを受信したら、Thanksページを構築して表示する処理を行います。
-このとき、checkoutSessionに対して「completeCheckoutSession」を呼び出して完了させる必要があるため、Server側の処理を呼び出して下記を実行して下さい。
+Once we receive the Intent, we will build and display the Thanks page.
+At this time, we need to call "completeCheckoutSession" for checkoutSession to complete, so please call the Server side process and execute the following.
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for easier viewing.)
 
 //-------------------
 // Thanks Screen
@@ -1204,8 +1246,8 @@ app.get('/sample/thanks', async (req, res) => {
             currencyCode: "JPY"
         }
     });
-    // res.render('sample/thanks.ejs', order); // この部分はJSONなど、アプリで受け取りやすい形式のデータを返却するよう、修正する。
+    // res.render('sample/thanks.ejs', order); // Modify this part to return the data in a format that is easy for the app to receive, such as JSON.
 });
 ```
 
-本サンプルアプリをベースとしたNativeアプリの一連の流れとしては、以上となります。
+The above is a series of steps for a Native app based on this sample app.

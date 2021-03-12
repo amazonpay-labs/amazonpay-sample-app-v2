@@ -1,68 +1,68 @@
-# Amazon Pay モバイル サンプルアプリ iOSアプリの実装について
-本サンプルアプリの、iOSアプリ側の実装です。インストールして動作させる方法については、[こちら](./README_install.md)をご参照下さい。
+# Amazon Pay Mobile Sample App iOS App Implementation
+This is the implementation of the iOS app side of this sample app. For instructions on how to install and run the app, please refer to [here](. /README_install.md).
 
-# 動作環境
-iOS バージョン11.2以降: Safari Mobile 11以降  
-[参考] https://pay.amazon.com/jp/help/202030010
+# Operating environment
+iOS version 11.2 or later: Safari Mobile 11 or later  
+[Reference] https://pay.amazon.com/jp/help/202030010
 
-# その他の前提条件
-本サンプルアプリではUniversal Linksという技術を使っており、こちらを利用するためには下記の条件が必要です。
- - [Apple Developer Program](https://developer.apple.com/jp/programs/)に登録していること 
- - Web上のhttpsで正しくアクセスできる場所に設定ファイルを配置する必要があるので、ECサイトとは別ドメインのサーバーか、AWS等のクラウドサービスのアカウントを保有していること  
-   Note: 本サンプルアプリでは、[Amazon S3](https://aws.amazon.com/jp/s3/)を利用しています。こちらはアカウントをInternet上で簡単に取得でき、世界中で広く使われており、利用方法などの情報も多く、12ヶ月間 5GBの無料利用枠もあるため、お勧めです。  
+# Other prerequisites
+This sample app uses a technology called Universal Links, and the following conditions are required to use this technology.
+ - You must be registered with the [Apple Developer Program](https://developer.apple.com/jp/programs/). 
+ - Since the configuration file must be placed in a location on the Web that can be properly accessed using https, you must have a server with a different domain from the EC site, or an account with a cloud service such as AWS.  
+   Note: In this sample application, [Amazon S3](https://aws.amazon.com/jp/s3/) is used. It is easy to get an account on the Internet, is widely used around the world, has a lot of information on how to use it, and has a free usage limit of 5GB for 12 months.  
 
-# 概要
-本サンプルアプリは、下記動画のように動作いたします。
+# Overview
+This sample application will work as shown in the video below.
 
 <img src="docimg/ios-movie.gif" width="300">  
 
-フローの詳細は、[flow-ios.xlsx](./flow-ios.xlsx) をご参照ください。  
-こちらのフローをベースに、以後詳細な実装方法について解説します。
+The details of the flow can be found in [flow-ios.xlsx](. /flow-ios.xlsx).  
+Based on this flow, I will explain the detailed implementation in the following sections.
 
-# Amazon Payの実装方法 - WebViewアプリ編
+# How to implement Amazon Pay - WebView app version
 
-## カートページ
+## Cart page
 
 <img src="docimg/cart.png" width="500">  
 
-### モバイルアプリのJavaScript側からのCallback受付の設定
-モバイルアプリではAmazon Payの処理はSecure WebView上で実行する必要がありますが、WebViewから直接Secure WebViewは起動できないため、WebViewのJavaScriptから一旦Nativeコードを起動できるよう設定する必要があります。  
-それを行うのが下記のコードです。  
+### Setting up Callback acceptance from the JavaScript side of the mobile app
+In the mobile app, the Amazon Pay process needs to be executed on the Secure WebView, but since the Secure WebView cannot be launched directly from the WebView, it is necessary to configure it so that the Native code can be launched once from the WebView's JavaScript.  
+The following code will do that.  
 
 ```swift
-// ViewController.swiftから抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from ViewController.swift (Some parts have been modified for clarity.)
 
-            // JavaScript側からのCallback受付の設定
+            // Set up callback acceptance from the JavaScript side
             let userContentController = WKUserContentController()
             userContentController.add(self, name: "iosApp")
             let webConfig = WKWebViewConfiguration();
             webConfig.userContentController = userContentController
             
-            // WebViewの生成、cartページの読み込み
+            // Create WebView and load cart page
             webView = WKWebView(frame: rect, configuration: webConfig)
                 :
                 :
 extension ViewController: WKScriptMessageHandler {
-    // JavaScript側からのCallback.
+    // Callback from JavaScript side.
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         print("ViewController#userContentController")
                 :
     }
 }
-```
+````
 
-このように設定すると、下記のようにJavaScript側からNative側にメッセージを送信することが可能になります。
-```js
+With this configuration, it is possible to send a message from the JavaScript side to the Native side as shown below.
+```js.
         webkit.messageHandlers.iosApp.postMessage(data);
 ```
 
-### クライアント判定
-本サンプルアプリでは、同一のHTML/JavaScriptの画面でAndroid/iOS/通常のBrowserの全てに対応しております。  
-そのため、動作環境に応じて処理を切り替える必要がある場合には、クライアントを判定して条件分岐を行う必要があります。  
-それを行っているのが、下記のJavaScriptのコードです。
+### Client determination
+This sample app supports all Android/iOS/normal Browser with the same HTML/JavaScript screen.  
+Therefore, if you need to switch the process according to the operating environment, you need to judge the client and do a conditional branch.  
+The JavaScript code below does just that.
 
 ```js
-// nodejs/views/sample/cart.ejsより抜粋
+// Excerpt from nodejs/views/sample/cart.ejs
 
     let client = "browser";
     if(window.androidApp) {
@@ -73,32 +73,32 @@ extension ViewController: WKScriptMessageHandler {
     document.cookie = "client=" + client + ";path=/;secure";
 ```
 
-上記「モバイルアプリのJavaScript側からのCallback受付の設定」で設定されたCallback用のObjectの存在確認を行うことで、それぞれ何の環境なのかを判定しています。  
-判定結果はServer側でも参照できるよう、Cookieに設定しています。  
+By checking the existence of the Object for Callback set in "Setting up Callback acceptance from the JavaScript side of the mobile app" above, we can determine what environment it is for each.  
+The judgment result is set in a cookie so that it can be referred to on the Server side.  
 
-### 「Amazon Payボタン」画像の配置
+### Placement of the "Amazon Pay Button" image
 
-Amamzon Payで支払いができることをユーザに視覚的に伝えるのには、Amazon Payボタンを画面に表示するのが効果的です。  
-WebView上では本物のAmazon Payボタンを配置できないので、ここでは画像を代わりに配置しています。
+Displaying an Amazon Pay button on the screen is an effective way to visually communicate to users that they can pay with Amazon Pay.  
+Since we cannot place a real Amazon Pay button on the WebView, we place an image instead.
 
-それを行っているのが、下記のJavaScriptです。
+This is done in the following JavaScript.
 ```js
-// nodejs/views/sample/cart.ejsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/views/sample/cart.ejs (Some parts have been modified for clarity.)
 
     if(client === 'browser') {
-        amazon.Pay.renderButton('#AmazonPayButton', {
+        Amazon.Pay.renderButton('#AmazonPayButton', {
             :
         });
     } else {
         let node = document.createElement("input");
         node.type = "image";
-        node.src = "/static/img/button_images/Sandbox-live-ja_jp-amazonpay-gold-large-button_T2.png";
+        node.src = "/static/img/button_images/Sandbox-live-en_jp-amazonpay-gold-large-button_T2.png";
         node.addEventListener('click', (e) => {
             coverScreen();
             if(client === 'androidApp') {
                 androidApp.login();
             } else {
-                // → iOSの場合. 
+                // → For iOS. 
                 webkit.messageHandlers.iosApp.postMessage({op: 'login'});
             }
         });
@@ -106,30 +106,30 @@ WebView上では本物のAmazon Payボタンを配置できないので、ここ
     }
 ```
 
-最初の判定で、通常のBrowserだった場合にはそのままAmazon Payの処理が実施できるので、通常通りAmazon Payボタンを読み込んでいます。  
-iOSの場合は、「Amazon Payボタン」画像のnodeを生成して同画面内の「AmazonPayButton」ノードの下に追加しています。  
-この時指定する「Amazon Payボタン」画像は「./nodejs/static/img/button_images」の下にあるものから選ぶようにして下さい。なお、本番環境向けにファイル名が「Sandbox_」で始まるものを指定しないよう、ご注意下さい。  
-また、この生成したnodeがclickされたとき、「login」を指定したObjectをパラメタとして、Native側のCallbackを呼び出すEvent Handlerをaddしています。  
+In the first decision, if the browser is a normal browser, the Amazon Pay process can be implemented as is, so the Amazon Pay button is loaded as usual.  
+In the case of iOS, we generate a node for the "Amazon Pay Button" image and add it under the "AmazonPayButton" node in the same screen.  
+The "Amazon Pay Button" image to be specified at this time is ". /nodejs/static/img/button_images". Please be careful not to specify a file name that begins with "Sandbox_" for the production environment.  
+Also, when the generated node is clicked, we add an Event Handler that calls the native Callback with the Object that specifies "login" as a parameter.  
 
-### 「Amazon Payボタン」画像クリック時の、Secure WebViewの起動処理
-上記、「Amazon Payボタン」画像がクリックされたときに呼び出されるNative側のコードが、下記になります。  
+### Start Secure WebView when the "Amazon Pay Button" image is clicked.
+The following is the Native code that is called when the "Amazon Pay Button" image is clicked.  
 
 ```swift
-// ViewController.swiftから抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from ViewController.swift (Some parts have been modified for clarity.)
 
 extension ViewController: WKScriptMessageHandler {
-    // JavaScript側からのCallback.
+    // Callback from JavaScript side.
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         print("ViewController#userContentController")
         switch message.name {
-        case "iosApp":
-            print("iosApp")
+        case "IOSApp":
+            print("IOSApp")
             
             if let data = message.body as? NSDictionary {
                 let op = data["op"] as! String?
-                switch op! {
+                switch op!{
                 case "login":
-                    invokeAppLoginPage() // ← 今回は「login」が指定されているので、こちらが起動する
+                    invokeAppLoginPage() // ← In this case, "login" is specified, so this will be invoked
                 case "auth":
                     invokeAuthorizePage(data["url"] as! String)
                 default:
@@ -141,11 +141,11 @@ extension ViewController: WKScriptMessageHandler {
         }
     }
 }
-```
+````
 
-「invokeAppLoginPage()」の処理が、下記になります。  
+The process of "invokeAppLoginPage()" is as follows.  
 ```swift
-// ViewController.swiftから抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from ViewController.swift (Some parts have been modified for clarity.)
 
     var token: String?
         :
@@ -156,36 +156,36 @@ extension ViewController: WKScriptMessageHandler {
         let safariView = SFSafariViewController(url: NSURL(string: "https://localhost:3443/appLogin?client=iosApp&token=\(token!)")! as URL)
         present(safariView, animated: true, completion: nil)
     }
-```
+```.
 
-URLを指定して、SFSafariViewController(iOS側のSecure WebView)を起動しているのが分かると思います。  
-なお、UUID(version 4)を生成して「token」という名前で、Native側のFieldとURLのパラメタとして設定していますが、こちらの理由については後述します。  
+You can see that the URL is specified to launch SFSafariViewController (Secure WebView on iOS).  
+In addition, we have generated a UUID (version 4) and named it "token", and set it as a parameter to the Field and URL on the Native side, but the reason for this is explained later.  
 
-## 自動的にAmazonログイン画面に遷移させるページ
+## Page that automatically transitions to the Amazon login screen
 
 <img src="docimg/appLogin.png" width="500">  
 
-こちらの画面ではAmazon Payが用意した「initCheckout」というメソッドをJavaScriptでcallすることで、Amazonログイン画面に遷移させています。  
+This screen transitions to the Amazon login screen by using JavaScript to call the "initCheckout" method prepared by Amazon Pay.  
 
-### Server側のAmazon Payボタン出力準備
-Amazon Payボタンを出力するための準備として、Server側にてAmazon Payボタンの出力に必要なpayloadと signatureの生成、その他の設定値の受け渡しを行います。  
+### Preparing to output the Amazon Pay button on the Server side
+In preparation for outputting the Amazon Pay button, we will generate the payload and signature required for outputting the Amazon Pay button on the Server side, and pass in the other configuration values.  
 
-```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+``js
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------
 // App Login Screen
 //-------------------
 
 app.get('/appLogin', async (req, res) => {
-    // ※ req.queryには、上記ViewControllerで指定されたURLパラメタが入る
-    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`));
+    // * req.query will contain the URL parameter specified in ViewController above.
+    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query. client}.html?token=${req.query.token}`));
 });
 
 function calcConfigs(url) {
     const payload = createPayload(url);
     const signature = apClient.generateButtonSignature(payload);
-    return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId};
+    return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId}
 }
 
 function createPayload(url) {
@@ -196,15 +196,15 @@ function createPayload(url) {
         storeId: keyinfo.storeId
     };
 }
-```
+````
 
-指定されているURLの「https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/...」 はAmazon Payへのログイン & 住所・支払い方法の選択後のリダイレクト先になります。  
-このURLは後述の「Universal Links」という技術でSecure WebViewからNativeコードを起動するために使用されます。  
+The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/... in the specified URL will be the redirect destination after logging in to Amazon Pay & selecting the address and payment method.  
+This URL is used to launch the Native code from Secure WebView with the "Universal Links" technology described below.  
 
-これらの値が「appLogin.ejs」にパラメタとして渡され、HTML & CSS & JavaScriptが生成されます。  
+These values are passed as parameters to "appLogin.ejs" to generate HTML & CSS & JavaScript.  
 
 ```html
-<!-- nodejs/views/appLogin.ejsより抜粋 (見やすくするため、一部加工しています。) -->
+<! -- Excerpt from nodejs/views/appLogin.ejs (Some parts have been modified for clarity.) --> :.
 
     :
 <script src="https://static-fe.payments-amazon.com/checkout.js"></script>
@@ -217,61 +217,61 @@ function createPayload(url) {
         productType: 'PayAndShip', // checkout type
         placement: 'Cart', // button placement
         createCheckoutSessionConfig: {
-            payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (※ HTML Escapeをしないで出力する)
+            payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (* output without HTML Escape)
             signature: '<%= signature %>', // signature generated in step 3
             publicKeyId: '<%= publicKeyId %>' 
         }
     });    
-</script>
+</script
 ```
 
-この「initCheckout」メソッドの呼出により、自動的にAmazon Payのログイン画面に遷移させています。  
-こちらのファイルは[EJS](https://ejs.co/)というTemplate Engineを使って作成されていますが、構文はTemplate Engineとしては一般的なものであるため、比較的簡単に理解できるかと思います。  
+This call to the "initCheckout" method automatically transitions to the Amazon Pay login screen.  
+This file is created using Template Engine called [EJS](https://ejs.co/), but the syntax is common for Template Engine, so it should be relatively easy to understand.  
 
-## Amazon側の画面からのリダイレクトによる、Universal Linksの発動
+## Triggering Universal Links by redirecting from Amazon's screen
 
 <img src="docimg/universallink.png" width="500">  
 
-### Universal Linksについて
-Universal Linksについての詳細については、[こちら](./README_swv2app.md)に記載しております。
+### About Universal Links
+For more information about Universal Links, see [here](. /README_swv2app.md).
 
-Universal Linksの基本的な発動条件は「Safari/SFSafariView等でLinkをタップする」ことですが、iOSのバージョンやその他の条件によっては、ServerからのRedirectでも発動することがあります。  
-Universal Linksが発動しなかった場合には、指定されたURLに存在するファイルが通常通りに表示されます。  
+The basic condition for triggering Universal Links is "tapping the Link in Safari/SFSafariView etc.", but depending on the iOS version and other conditions, it may also be triggered by a Redirect from the Server.  
+If Universal Links is not triggered, files that exist at the specified URL will be displayed as usual.  
 
-### 救済ページを使った2段構えのUniversal Linksの発動
-本サンプルでは、Amazon側のページでログイン＆住所・支払い方法の選択をしたあとのリダイレクトでUniversal Linksが発動するURLを指定していますが、上記の理由により、ここでは発動しない場合もあり得ます。  
+### Triggering two-stage Universal Links with a rescue page
+In this sample, we have specified a URL where Universal Links will be triggered by a redirect after the user logs in and selects an address and payment method on the Amazon page, but for the reasons mentioned above, it is possible that Universal Links will not be triggered here.  
 
-本サンプルではその場合の備えとして、発動しなかった場合には再度Universal Linksが発動するURLへのリンクを持つ、救済ページに自動的に遷移するように作られています。  
-ここではその仕組を説明します。  
+However, for the reasons mentioned above, it is possible that Universal Links will not be triggered here. As a precaution, this sample is designed to automatically redirect the user to a relief page that has a link to a URL where Universal Links will be triggered again if it is not triggered.  
+Here's how it works.  
 
-「自動的にAmazonログイン画面に遷移させるページ」で登場した、Universal Linksを発動させるURLのiOS版は、下記になります。  
+The iOS version of the URL that triggers Universal Links, which appeared in "The page that automatically transitions to the Amazon login screen," is as follows  
 https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-iosApp.html?token=XXXXXXXX
 
-上記でも書いたとおり、Universal Linksが発動しなかった場合には、指定されたURLに存在するファイルが表示されます。  
-このURLの先には下記の内容のHTMLファイルが置かれております。  
+As mentioned above, if Universal Links is not triggered, the file that exists at the specified URL will be displayed.  
+The following HTML file is placed at the end of this URL.  
 ```html
-<!-- nodejs/linksの下にも同じものが置かれています。 -->
+<! -- The same thing is placed under nodejs/links. -->
 
 <html>
     <script>
         location.href = "https://localhost:3443/static/next.html" + location.search;
     </script>
 </html>
-```
+````
 
-こちらはファイルにアクセス時に指定されたURLパラメタを付与した上で、「next.html」にリダイレクトしています。  
-Note: ↑はlocal環境用なのでリダイレクト先が「https://localhost:3443/static/next.html 」になっていますが、こちらは本番・各テスト等の環境に応じて変更する必要があります。  
-「next.html」の中身が下記です。  
+This redirects the file to "next.html" with the URL parameter specified when the file was accessed.  
+Note: The above is for a local environment, so the redirect is set to "https://localhost:3443/static/next.html", but you may need to change this depending on your environment, such as production or testing.  
+The content of "next.html" is as follows.  
 ```html
-<!-- nodejs/static/next.htmlより抜粋 -->
+<! -- excerpt from nodejs/static/next.html -->
 
 <body data-gr-c-s-loaded="true">
 <div class="container">
-    <h3 class="my-4">Amazon Login 処理完了</h3>
-    「次へ」ボタンをタップして下さい。<br>
+    <h3 class="my-4">Amazon Login processing completed</h3>.
+    Please tap the "Next" button. <br>
     <br>
     <a id="nextButton" href="#" class="btn btn-info btn-lg btn-block">
-        次　へ
+        Next
     </a>
 </div>
 <script>
@@ -279,132 +279,134 @@ Note: ↑はlocal環境用なのでリダイレクト先が「https://localhost:
         "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" + location.search;
 </script>
 </body>
-```
+````
 
-アクセス時に指定されたURLパラメタを付与したUniversal Linksを発動するURLを「id="nextButton"」のリンクに指定しております。  
-この仕組みにより、Universal Linksが発動しなかった場合にはこちらの画面が表示されます。この「次へ」のLinkをユーザがタップすることで、確実に条件を満たしてUniversal Linksを発動させることができます。  
+The URL that triggers Universal Links with the URL parameter specified at the time of access is specified in the "id="nextButton"" link.  
+With this mechanism, if Universal Links is not triggered, this screen will be displayed. When the user taps on this "next" link, the conditions are met and Universal Links are triggered without fail.
 
-## 購入ページ
+
+## Purchase page
 
 <img src="docimg/purchase.png" width="650">  
 
-### tokenチェックとViewControllerへの遷移先URLの設定
-Universal Linksにより起動されるNaiveコードは、下記になります。  
+### token check and setting up the URL for the transition to ViewController
+The Naive code triggered by Universal Links is shown below.  
 
 ```swift
-// AppDelegateより抜粋　(見やすくするため、一部加工しています。)
+// Excerpt from AppDelegate (Some parts have been modified for clarity.)
 
-    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([ UIUserActivityRestoring]?) -> Void) -> Bool {
         print("Universal Links!")
         if userActivity.activityType == NSUserActivityTypeBrowsingWeb {
             print(userActivity.webpageURL!)
             
-            // URLパラメタのパース
+            // Parse the URL parameters
             var urlParams = Dictionary<String, String>.init()
             for param in userActivity.webpageURL!.query!.components(separatedBy: "&") {
                 let kv = param.components(separatedBy: "=")
                 urlParams[kv[0]] = kv[1].removingPercentEncoding
             }
             
-            // 現在最前面のSFSafariViewとその裏のViewControllerを取得
+            // get the current foremost SFSafariView and the ViewController behind it
             var sfsv = UIApplication.shared.keyWindow?.rootViewController
             var vc:ViewController? = nil
-            while (sfsv!.presentedViewController) != nil {
+            while (sfsv!.presentedViewController) ! = nil {
                 if let v = sfsv as? ViewController {
                     vc = v
                 }
                 sfsv = sfsv!.presentedViewController
             }
             
-            if(vc?.token! == urlParams["token"]!) { // tokenの一致判定
-                // 一致した場合には、購入ページのURLをViewControllerに設定
+            if(vc?.token! == urlParams["token"]!) { // determine token match
+                // If a match, set the URL of the purchase page to ViewController
                 vc?.webviewUrl = "/sample/checkoutReview?amazonCheckoutSessionId=\(urlParams["amazonCheckoutSessionId"]!)"
             } else {
-                // 不一致の場合には不正な遷移であるため、エラーページを設定
+                // In case of a mismatch, set an error page because it is an invalid transition
                 vc?.webviewUrl = "static/sample/error.html"
             }
 
-            // SFSafariViewのclose (この後、ViewController#viewDidLoadに処理が移る)
-            (sfsv as? SFSafariViewController)?.dismiss(animated: false, completion: nil)
+            // close SFSafariView (after this, the process will be transferred to ViewController#viewDidLoad)
+            (sfsv as? SFSafariViewController)? .dismiss(animated: false, completion: nil)
         }
         return true
     }
-```
-まず、Universal Links発動のURLに指定されていたURLパラメタを取得します。  
-次にApplicationの履歴階層から、この時点で最前面に表示されているSFSafariViewControllerと、そのすぐ下のViewControllerを取得します。  
+````
+First, get the URL parameter that was specified in the URL that triggered Universal Links.  
+Next, from the Application history hierarchy, get the SFSafariViewController that is displayed on the front page at this point, and the ViewController immediately below it.  
 
-その後、「『Amazon Payボタン』画像クリック時の、Secure WebViewの起動処理」でViewControllerに保持したtokenと、Secure WebViewから受け渡されたtokenの一致判定を行っています。  
-このtokenの判定を行うことで、不正な遷移でこの処理が起動された場合に、それを検出してエラーとできるようになります。  
+After that, we perform a match judgment between the token held in the ViewController in "Secure WebView startup processing when the 'Amazon Pay button' image is clicked" and the token passed from Secure WebView.  
+By judging the token, if this process is invoked with an invalid transition, it will be detected and an error will be generated.  
 
-例えば、悪いユーザがSecure WebViewを起動する時の「自動的にAmazonログイン画面に遷移させるページ」へのURLを読み取って、メールなどで他のユーザに送ったとします。  
-送りつけられたユーザがiOS端末でメールのURLのリンクをクリックした場合、Safariが立ち上がってAmazon Payログインページに遷移してしまう可能性があります。  
-もしそのままAmazon Payにログインして、住所・支払い方法選択も実施した場合、SafariならUniversal Linksも発動してしまいますので、同アプリをインストールしていればその後の購入フローも実行できることになってしまいます。  
-画面のFlowによってはこれが大きな問題になる可能性もあるため、本サンプルアプリでは念のためにtokenチェックを行っております。  
+For example, let's say a bad user reads the URL to the "page that automatically transitions to the Amazon login screen" when launching Secure WebView, and sends it to another user via email.  
+If the user who was sent the URL clicks on the link in the email on their iOS device, Safari will launch and they may be redirected to the Amazon Pay login page.  
+If the user logs into Amazon Pay and selects an address and payment method, Safari will also trigger Universal Links, which means that if the user has the app installed, they will be able to execute the purchase flow afterwards.  
+Since this could be a big problem depending on the screen flow, this sample app performs a token check just in case.  
 
-tokenチェックの後は、購入ページのURLをViewControllerに設定します。  
-購入ページのURLには「amazonCheckoutSessionId」をURLパラメタを付与しますが、これはPC・Mobileのブラウザでの購入ページへの遷移と全く同じURL・全く同じ条件になります。  
-よって、この後の購入ページの表示では「モバイルアプリ向け」「PC・Mobileのブラウザ向け」で別々の処理を実装する必要はありません。  
+After the token check, set the URL of the purchase page to ViewController.  
+The URL parameter "amazonCheckoutSessionId" is given to the URL of the purchase page, but this is the exact same URL and the exact same conditions as the transition to the purchase page in the PC and Mobile browsers.  
+Therefore, there is no need to implement separate processes for "for mobile apps" and "for PC and Mobile browsers" when displaying the purchase page.  
 
-最後に、SFSafariView(Secure WebView)をcloseします。これにより、すぐ下のViewController#viewDidLoadに処理が移ります。  
+Finally, close the SFSafariView (Secure WebView). This will move the process to ViewController#viewDidLoad immediately below.  
 
-### 購入ページの読み込み
+### Loading the purchase page
 
-ViewControllerでは、viewDidLoadの中の下記の処理が起動します。  
+In ViewController, the following process in viewDidLoad will be invoked.  
 
 ```swift
-// ViewControllerより抜粋　(見やすくするため、一部加工しています。)
+// Excerpt from ViewController (Some parts have been modified to make it easier to read.)
 
                     :
             let url = webviewUrl
-            if(url != nil) {
+            if(url ! = nil) {
                 webviewUrl = nil
                 webView.evaluateJavaScript("loadUrl('\(url!)')", completionHandler: nil)
                     :
 ```
 
-WebViewではこの時点でカートページが表示されており、上記にて下記のJavaScriptが起動して購入ページの読み込みが開始します。  
+At this point, the cart page is displayed in WebView, and the following JavaScript is triggered above to start loading the purchase page.  
 
 ```js
     function loadUrl(url) {
         location.href = url;
     }
-```
+````
 
-Server側では下記が実行されます。
+On the Server side, the following will be executed.
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------------
 // Checkout Review Screen
 //-------------------------
 app.get('/sample/checkoutReview', async (req, res) => {
-    // 受注情報
+    // Order information
     let order = {host: req.headers.host, amazonCheckoutSessionId: req.query.amazonCheckoutSessionId,
         client: req.cookies.client, hd8: req.cookies.hd8, hd10: req.cookies.hd10, items: []};
     order.items.push({id: 'item0008', name: 'Fire HD8', price: 8980, num: parseInt(order.hd8)});
     order.items.push({id: 'item0010', name: 'Fire HD10', price: 15980, num: parseInt(order.hd10)});
-    order.items.forEach(item => item.summary = item.price * item.num); // 小計
-    order.price = order.items.map(item => item.summary).reduce((pre, cur) => pre + cur); // 合計金額
-    order.chargeAmount = Math.floor(order.price * 1.1); // 税込金額
+    order.items.forEach(item => item.summary = item.price * item.num); // Subtotal
+    order.price = order.items.map(item => item.summary).reduce((pre, cur) => pre + cur); // total amount
+    order.chargeAmount = Math.floor(order.price * 1.1); // amount including tax
 
-    // Amazon Pay受注情報
+    // Amazon Pay order information
     const payload = await apClient.getCheckoutSession(req.query.amazonCheckoutSessionId, 
         {'x-amz-pay-idempotency-key': uuid.v4().toString().replace(/-/g, '')});
     order.checkoutSession = JSON.parse(payload.body);
 
-    // Note: 一般的には受注情報はSessionやDBなどを使ってServer側に保持しますが、本サンプルではシンプルにするためにCookieを使用しています
+    // Note: In general, order information is kept on the Server side using Session or DB, but this sample uses Cookie for simplicity.
     res.cookie('session', JSON.stringify(order), {secure: true});
     
     res.render('sample/checkoutReview.ejs', order);
 });
-```
+````
 
-cartの情報を計算して金額を出し、またAmazon Pay APIより住所情報等を取得し、template engineに渡して画面を生成して表示します。
+It calculates the amount of money by calculating the cart information, gets the address information from Amazon Pay API, and passes it to the template engine to generate and display the screen.
 
-### 購入ボタンクリック時の処理
+### Processing when a purchase button is clicked.
 
-購入ボタンをクリックすると、下記のScriptが実行されます。
+When you click the buy button, the following script will be executed.
+
 
 ```js
 // nodejs/views/sample/checkoutReview.ejsより抜粋 (見やすくするため、一部加工しています。)
@@ -418,18 +420,18 @@ cartの情報を計算して金額を出し、またAmazon Pay APIより住所�
         })
         .then(
             :
-```
+````
 
-Ajaxにより、下記のServer側のCheckout Session Update APIが呼び出されます。  
+Ajax will call the following Server-side Checkout Session Update API.  
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-----------------------------
 // Checkout Session Update API
 //-----------------------------
 
-// 事業者側の受注番号の採番
+// Numbering of the order number on the business side
 const newMerchantReferenceId = function() {
     let currentNumber = 1;
     return function() {
@@ -440,10 +442,10 @@ const newMerchantReferenceId = function() {
 app.post('/sample/checkoutSession', async (req, res) => {
     let order = JSON.parse(req.cookies.session);
     const payload = await updateCheckoutSession({merchantReferenceId: newMerchantReferenceId(),
-        merchantStoreName: "MY-SHOP", noteToBuyer: "Thank you!", customInformation: "This isn't shared with Buyer", ...order});    
+        merchantStoreName: "MY-SHOP", noteToBuyer: "Thank you!", customInformation: "This isn't shared with Buyer", . .order});    
     order.checkoutSession = JSON.parse(payload.body);
 
-    // Note: 一般的には受注情報はSessionやDBなどを使ってServer側に保持しますが、本サンプルではシンプルにするためにCookieを使用しています
+    // Note: Generally, order information is kept on the Server side using Session or DB, but in this sample, we use Cookie for simplicity.
     res.cookie('session', JSON.stringify(order), {secure: true});
 
     res.writeHead(200, {'Content-Type': 'application/json; charset=UTF-8'});
@@ -460,7 +462,7 @@ async function updateCheckoutSession(data) {
         },
         paymentDetails: {
             paymentIntent: 'Authorize',
-            canHandlePendingAuthorization: false,
+            paymentIntent: 'Authorize', paymentIntent: 'Authorize', canHandlePendingAuthorization: false,
             chargeAmount: {
                 amount: '' + data.chargeAmount,
                 currencyCode: "JPY"
@@ -478,14 +480,14 @@ async function updateCheckoutSession(data) {
 }
 ```
 
-Amazon PayのAPIを使って、決済に必要な購入金額や事業者側の受注番号等の情報と、支払い処理ページ(後述)で自動的にリダイレクトされるURLを指定して、checkoutSessionに対してupdateしています。  
-この、「支払い処理ページで自動的にリダイレクトされるURL」ですが、Browserの場合は直接ThanksページのURLを、iOS及びAndroidの場合は中継用ページ(後述)へのURLを、それぞれ指定します。
-Amazon PayのAPIからの戻り値は、そのままCheckout Session Update APIのResponseとして返却します。  
+Using Amazon Pay's API, we update the checkoutSession with information such as the purchase amount and the order number of the business, which are required for payment, and the URL that will be automatically redirected on the payment processing page (see below).  
+As for the "URL to be automatically redirected on the payment processing page," in the case of Browser, specify the URL of the Thanks page directly, and in the case of iOS and Android, specify the URL to the page for relay (see below).
+The return value from the Amazon Pay API is directly returned as a Response of the Checkout Session Update API.  
 
-AjaxのResponseが返ってくると、下記が実行されます。
+When the Ajax Response is returned, the following will be executed.
 
 ```js
-// nodejs/views/sample/checkoutReview.ejsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/views/sample/checkoutReview.ejs (Some parts have been modified for clarity.)
 
             :
     document.getElementById("purchaseButton").addEventListener('click', (e) => {
@@ -499,7 +501,7 @@ AjaxのResponseが返ってくると、下記が実行されます。
                         coverScreen();
                         androidApp.auth(json.webCheckoutDetails.amazonPayRedirectUrl);
                     } else if(window.webkit && webkit.messageHandlers && webkit.messageHandlers.iosApp) {
-                        // iOSの場合
+                        // For iOS
                         coverScreen();
                         webkit.messageHandlers.iosApp.postMessage({op: 'auth', url: json.webCheckoutDetails.amazonPayRedirectUrl});            
                     } else {
@@ -515,33 +517,34 @@ AjaxのResponseが返ってくると、下記が実行されます。
             }
         );
     });
-```
+```.
 
-WebViewに渡されたCallback Objectの存在チェックにより、クライアントの環境を判定して対応する処理を実行します。  
-今回はiOSなので、下記が実行されます。
+By checking the existence of the Callback Object passed to the WebView, the client environment is determined and the corresponding process is executed.  
+In this case, since we are on iOS, the following will be executed.
+
 ```js
                         webkit.messageHandlers.iosApp.postMessage({op: 'auth', url: json.webCheckoutDetails.amazonPayRedirectUrl});
 ```
 
-これにより、文字列「auth」とCheckout Session Update APIのResponseに含まれていたURLをパラメタとして、Native側の下記の処理が実行されます。  
+This will execute the following process on the Native side, using the string "auth" and the URL included in the Checkout Session Update API Response as parameters.  
 
 ```swift
-// ViewController.swift より抜粋
+// Excerpt from ViewController.swift
 
-    // JavaScript側からのCallback.
+    // Callback from JavaScript side.
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         print("ViewController#userContentController")
         switch message.name {
-        case "iosApp":
-            print("iosApp")
+        case "IOSApp":
+            print("IOSApp")
             
             if let data = message.body as? NSDictionary {
                 let op = data["op"] as! String?
-                switch op! {
+                switch op!{
                 case "login":
                     invokeAppLoginPage()
                 case "auth":
-                    invokeAuthorizePage(data["url"] as! String) // ← ここが実行される
+                    invokeAuthorizePage(data["url"] as! String) // ← this is where it will be executed
                 default:
                     return
                 }
@@ -550,9 +553,9 @@ WebViewに渡されたCallback Objectの存在チェックにより、クライ�
             return
         }
     }
-```
+````
 
-「invokeAuthorizePage」は下記です。
+The "invokeAuthorizePage" is as follows.
 
 ```swift
     func invokeAuthorizePage(_ url: String) {
@@ -561,53 +564,52 @@ WebViewに渡されたCallback Objectの存在チェックにより、クライ�
         present(safariView, animated: true, completion: nil)
     }
 ```
+With the above, you can open the URL that was included in the return value of the Amazon Pay API checkoutSession update process in Secure WebView.  
 
-以上により、Amazon Pay APIのcheckoutSession更新処理の戻り値に含まれていたURLを、Secure WebViewで開くことができます。  
-
-## 支払い処理ページ
+## Payment processing page
 
 <img src="docimg/payment.png" width="400">  
 
-上記Amazon Pay APIより渡されたURLに対してアクセスすると、支払い処理ページ(スピナーページとも呼ばれます)が表示されます。  
-この画面が表示されている間、Amazon側ではServer側で与信を含む支払いの処理が行われており、エラーハンドリングも含めてこちらの画面で処理されています。  
-支払いの処理が終わると、「購入ボタンクリック時の処理」で指定した中継用ページへのURLに自動的にリダイレクトされます。  
+When you access the URL passed from the Amazon Pay API above, the payment processing page (also known as the spinner page) will be displayed.  
+While this screen is being displayed, Amazon is processing the payment, including credit, on the Server side, and error handling is also being handled on this screen.  
+When the payment process is complete, you will be automatically redirected to the URL for the relay page specified in "Processing when clicking the purchase button".  
 
-### 中継用ページ
-中継用ページは下記のようになっています。  
+### Relay page
+The relay page looks like the following.  
 
 ```html
-<!-- nodejs/static/dispatcher.html より抜粋 -->
+<! -- excerpt from nodejs/static/dispatcher.html -->
     :
 <script type="text/javascript" charset="utf-8">
     function getURLParameter(name, source) {
-        return decodeURIComponent((new RegExp('[?|&amp;|#]' + name + '=' +
-                        '([^&;]+?)(&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
+        return decodeURIComponent((new RegExp('[? |&amp;|#]' + name + '=' +
+                        '([^&;]+?)') (&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
     }
 
     const client = getURLParameter("client", location.search);
-    location.href = client === 'iosApp' 
+    location.href = client === 'IOSApp' 
         ? 'amazonpay-ios-v2://thanks'
         : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end;';
-</script>
+</script
 
 <body></body>
 </html>
 ```
 
-ここではCustomURLSchemeを使って、JavaScriptよりアプリを起動しています。  
-CustomURLSchemeについての詳細については、[こちら](./README_swv2app.md)をご参照下さい。  
-Universal Linksとは違い、CustomURLSchemeでは間違って悪意のあるアプリが起動してしまう可能性がゼロではないため、ここでは「amazonCheckoutSessionId」のようなセンシティブな情報は渡さないようにします。  
+Here we are using CustomURLScheme to launch the app from JavaScript.  
+For more information about CustomURLScheme, please refer to [here](. /README_swv2app.md).  
+Unlike Universal Links, CustomURLScheme does not pass sensitive information such as "amazonCheckoutSessionId" because there is no possibility of accidentally launching a malicious app.  
 
-## Thanksページ
+## Thanks page
 
 <img src="docimg/thanks.png" width="600">  
 
-### CustomURLSchemeにより起動されるNativeの処理
+### Native processing triggered by CustomURLScheme
 
-上記CustomURLSchemeにより起動されるNativeの処理は、下記になります。
+The native process invoked by the above CustomURLScheme is as follows.
 
 ```swift
-// AppDelegate.swift より抜粋
+// Excerpt from AppDelegate.swift
 
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
         print("Custom URL Scheme!")
@@ -615,55 +617,55 @@ Universal Linksとは違い、CustomURLSchemeでは間違って悪意のある�
         var sfsv = UIApplication.shared.keyWindow?.rootViewController
         var vc:ViewController? = nil
         
-        // 現在最前面のSFSafariViewとその裏のViewControllerを取得
-        while (sfsv!.presentedViewController) != nil {
+        // Get the current foremost SFSafariView and the ViewController behind it
+        while (sfsv!.presentedViewController) ! = nil {
             if let v = sfsv as? ViewController {
                 vc = v
             }
             sfsv = sfsv!.presentedViewController
         }
         
-        // ThanksページのURLをViewControllerに設定
+        // Set the URL of the Thanks page to ViewController
         vc?.webviewUrl = "/sample/thanks"
         
-        // SFSafariViewのclose (この後、ViewController#viewDidLoadに処理が移る)
-        (sfsv as? SFSafariViewController)?.dismiss(animated: false, completion: nil)
+        // close SFSafariView (after this, the process will be transferred to ViewController#viewDidLoad)
+        (sfsv as? SFSafariViewController)? .dismiss(animated: false, completion: nil)
         
         return true
     }
-```
+````
 
-Applicationの履歴階層から、この時点で最前面に表示されているSFSafariViewControllerと、そのすぐ下のViewControllerを取得します。  
-次にThanksページのURLをViewControllerに設定します。  
-最後に、SFSafariView(Secure WebView)をcloseします。これにより、すぐ下のViewController#viewDidLoadに処理が移ります。  
+From the Application history hierarchy, get the SFSafariViewController that is displayed on the topmost page at this point, and the ViewController just below it.  
+Next, set the URL of the Thanks page to the ViewController.  
+Finally, close the SFSafariView (Secure WebView). This will move the process to ViewController#viewDidLoad immediately below.  
 
-### Thanksページの読み込み
+### Loading the Thanks page
 
-ViewControllerでは、viewDidLoadの中の下記の処理が起動します。  
+In ViewController, the following process in viewDidLoad will be invoked.  
 
 ```swift
-// ViewControllerより抜粋　(見やすくするため、一部加工しています。)
+// Excerpt from ViewController (Some parts have been modified to make it easier to read.)
 
                     :
             let url = webviewUrl
-            if(url != nil) {
+            if(url ! = nil) {
                 webviewUrl = nil
                 webView.evaluateJavaScript("loadUrl('\(url!)')", completionHandler: nil)
                     :
 ```
 
-WebViewではこの時点で購入ページが表示されており、上記にて下記のJavaScriptが起動してThanksページの読み込みが開始します。  
+At this point, the purchase page is displayed in the WebView, and the following JavaScript is triggered above to start loading the Thanks page.  
 
 ```js
     function loadUrl(url) {
         location.href = url;
     }
-```
+````
 
-Server側では下記が実行されます。
+On the Server side, the following will be executed.
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------
 // Thanks Screen
@@ -680,16 +682,16 @@ app.get('/sample/thanks', async (req, res) => {
 });
 ```
 
-Amazon Pay APIを使ってcheckoutSessionを完了し、thanks画面を表示しています。  
-本サンプルアプリの一連の流れとしては、以上となります。
+The checkoutSession is completed using the Amazon Pay API, and the thanks screen is displayed.  
+This is the end of the series of steps for this sample application.
 
-## その他
+## Other.
 
-### Secure WebView起動時の対処
-WebViewからSecure WebView起動処理をJavaScriptで呼び出すとき、下記のように直前で「coverScreen」という、画面を真っ白にする関数を呼んでいます。  
+### What to do when starting Secure WebView
+When calling the Secure WebView startup process in JavaScript from WebView, a function called "coverScreen" is called immediately before as shown below to make the screen blank.  
 
 ```html
-<!-- nodejs/views/sample/cart.ejsより抜粋　(見やすくするため、一部加工しています。) -->
+<! -- Excerpt from nodejs/views/sample/cart.ejs (Some parts have been modified for clarity.) --> <!
                 :
 <body data-gr-c-s-loaded="true">
 <div id="white_cover" style="width:100%; height:100vh; background-color:#fff; position:relative; z-index:1000; display:none;"></div>
@@ -697,11 +699,11 @@ WebViewからSecure WebView起動処理をJavaScriptで呼び出すとき、下�
 <script type="text/javascript" charset="utf-8">
                 :
         node.addEventListener('click', (e) => {
-            coverScreen(); // ← ここで呼んでいる
+            coverScreen(); // ← we call it here
             if(client === 'androidApp') {
                 androidApp.login();
             } else {
-                webkit.messageHandlers.iosApp.postMessage({op: 'login'}); // ← Secure WebView起動処理
+                webkit.messageHandlers.iosApp.postMessage({op: 'login'}); // ← Secure WebView startup process
             }
         });
                 :
@@ -714,43 +716,43 @@ WebViewからSecure WebView起動処理をJavaScriptで呼び出すとき、下�
     }
 </script>
                 :
-```
+````
 
-もしこの関数を呼ばなかった場合、Secure WebViewがCloseされるときの画面は、下記のような動きになります。  
+If you don't call this function, your screen will look like the following when Secure WebView is closed.  
 <img src="docimg/nocover-version.gif" width="300">  
-WebViewの画面の遷移が終わるまでの間、Secure WebView起動前の画面が表示されるため、不自然に見えてしまいます。  
+Since the screen before Secure WebView is displayed until the WebView screen transition is completed, it looks unnatural.  
 
-Secure WebView起動直前に「coverScreen」を呼び出しておくことで、下記のように自然な見え方にすることができます。  
-<img src="docimg/cover-version.gif" width="300">  
+By calling "coverScreen" just before Secure WebView starts, you can make it look more natural as shown below.  
+<img src="docimg/cover-version.gif" width="300">.  
 
-なおこのままだと、ユーザがSecure WebViewの左上の「Done」をタップしてWebViewに戻ってきた場合には、画面が真っ白なままになってしまいます。  
-そこでその場合には、ViewController#viewDidLoadの下記コードにて「uncoverScreen」を呼んで、白い画面を元に戻しています
-。   
+
+If this is not done, when the user taps the "Done" button in the upper left corner of the Secure WebView and returns to the WebView, the screen will remain blank.  
+In such a case, call "uncoverScreen" in the following code of ViewController#viewDidLoad to restore the white screen.   
 
 ```swift
-// ViewControllerより抜粋
+// Excerpt from ViewController
                 webView.evaluateJavaScript("if(window.uncoverScreen) {uncoverScreen();}", completionHandler: nil)
 ```
 
-本サンプルでは「coverScreen」は単に真っ白な画面を表示していますが、こちらは各モバイルアプリのデザインや方針などに応じて、より自然に見えるものを表示することをお勧めいたします。  
+In this sample, "coverScreen" simply displays a blank screen, but we recommend that you display something that looks more natural here, depending on the design and policies of each mobile app.  
 
 
-# Amazon Payの実装方法 - Nativeアプリ編
+# How to implement Amazon Pay - Native App Version
 
-## カートページ or 商品ページ
+## Cart Page or Product Page
 <img src="docimg/cart.png" width="500">  
 
-### 「Amazon Payボタン」画像の配置
+### Placement of the "Amazon Pay Button" image
 
-Amamzon Payで支払いができることをユーザに視覚的に伝えるのには、Amazon Payボタンを画面に表示するのが効果的です。  
-Nativeアプリでは本物のAmazon Payボタンを配置できないので、画像を代わりに配置します。
+An effective way to visually communicate to users that they can pay with Amamzon Pay is to display an Amazon Pay button on the screen.  
+Since the Native app does not allow the placement of a real Amazon Pay button, we will place an image instead.
 
-この時指定する「Amazon Payボタン」画像は「./nodejs/static/img/button_images」の下にあるものから選ぶようにして下さい。なお、本番環境向けにファイル名が「Sandbox_」で始まるものを指定しないよう、ご注意下さい。  
+The "Amazon Pay button" image to be specified in this case is ". /nodejs/static/img/button_images". Please be careful not to specify a file name that begins with "Sandbox_" for production environments.  
 
-### 「Amazon Payボタン」画像クリック時の、Secure WebViewの起動処理
-上記、「Amazon Payボタン」画像がクリックされたときには、下記のようなコードを呼びます。  
+### Start Secure WebView when the Amazon Pay button image is clicked.
+When the "Amazon Pay Button" image is clicked, the following code will be called.  
 ```swift
-// ViewController.swiftから抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from ViewController.swift (Some parts have been modified for clarity.)
 
     var token: String?
         :
@@ -761,36 +763,36 @@ Nativeアプリでは本物のAmazon Payボタンを配置できないので、�
         let safariView = SFSafariViewController(url: NSURL(string: "https://localhost:3443/appLogin?client=iosApp&token=\(token!)")! as URL)
         present(safariView, animated: true, completion: nil)
     }
-```
+```.
 
-URLを指定して、SFSafariViewController(iOS側のSecure WebView)を起動しているのが分かると思います。  
-なお、UUID(version 4)を生成して「token」という名前で、Native側のFieldとURLのパラメタとして設定していますが、こちらの理由については後述します。  
+You can see that the URL is specified to launch SFSafariViewController (Secure WebView on iOS).  
+In addition, we have generated a UUID (version 4) and named it "token", and set it as a parameter to the Field and URL on the Native side, but the reason for this is explained later.  
 
-## 自動的にAmazonログイン画面に遷移させるページ
+## Page that automatically transitions to the Amazon login screen
 
 <img src="docimg/appLogin.png" width="500">  
 
-こちらの画面ではAmazon Payボタンを裏で出力し、こちらを自動的にJavaScriptでClickすることで、Amazonログイン画面に遷移させています。  
+This page outputs the Amazon Pay button behind the scenes, and automatically transitions to the Amazon login screen by clicking this button with JavaScript.  
 
-### Server側のAmazon Payボタン出力準備
-Amazon Payボタンを出力するための準備として、Server側にてAmazon Payボタンの出力に必要なpayloadと signatureの生成、その他の設定値の受け渡しを行います。  
+### Preparing to output the Amazon Pay button on the server side
+In order to prepare for the output of the Amazon Pay button, we will generate the payload and signature necessary for the output of the Amazon Pay button on the server side, and pass in the other configuration values.  
 
-```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+``js
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------
 // App Login Screen
 //-------------------
 
 app.get('/appLogin', async (req, res) => {
-    // ※ req.queryには、上記ViewControllerで指定されたURLパラメタが入る
-    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`));
+    // * req.query will contain the URL parameter specified in ViewController above.
+    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query. client}.html?token=${req.query.token}`));
 });
 
 function calcConfigs(url) {
     const payload = createPayload(url);
     const signature = apClient.generateButtonSignature(payload);
-    return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId};
+    return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId}
 }
 
 function createPayload(url) {
@@ -801,20 +803,20 @@ function createPayload(url) {
         storeId: keyinfo.storeId
     };
 }
-```
+````
 
-指定されているURLの「https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/...」 はAmazon Payへのログイン & 住所・支払い方法の選択後のリダイレクト先になります。  
-このURLは後述の「Universal Links」という技術でSecure WebViewからアプリを起動するために使用されます。  
+The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/... in the specified URL will be the redirect destination after logging in to Amazon Pay & selecting the address and payment method.  
+This URL is used to launch the app from Secure WebView using the "Universal Links" technology described below.  
 
-これらの値が「appLogin.ejs」にパラメタとして渡され、HTML & CSS & JavaScriptが生成されます。  
+These values are passed as parameters to "appLogin.ejs" to generate the HTML, CSS, and JavaScript.  
 
 ```html
-<!-- nodejs/views/appLogin.ejsより抜粋 (見やすくするため、一部加工しています。) -->
+<! -- Excerpt from nodejs/views/appLogin.ejs (Some parts have been modified for clarity.) --> :.
 
     :
 <div class="hidden">
-    <div id="AmazonPayButton"></div>
-</div>
+    <div id="AmazonPayButton"></div>.
+</div>.
 
 <script src="https://static-fe.payments-amazon.com/checkout.js"></script>
 <script type="text/javascript" charset="utf-8">
@@ -827,7 +829,7 @@ function createPayload(url) {
         placement: 'Cart', // button placement
         buttonColor: 'Gold',
         createCheckoutSessionConfig: {
-            payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (※ HTML Escapeをしないで出力する)
+            payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (* output without HTML Escape)
             signature: '<%= signature %>', // signature generated in step 3
             publicKeyId: '<%= publicKeyId %>' 
         }
@@ -839,53 +841,58 @@ function createPayload(url) {
 </script>
 ```
 
-上記のようにAmazon Payボタンを生成してJavaScriptでclickさせることで、自動的にAmazon Payのログイン画面に遷移させています。  
-こちらのファイルは[EJS](https://ejs.co/)というTemplate Engineを使って作成されていますが、構文はTemplate Engineとしては一般的なものであるため、比較的簡単に理解できるかと思います。
+By generating an Amazon Pay button and having it click in JavaScript as shown above, we automatically transition to the Amazon Pay login screen.  
+This file is created using Template Engine called [EJS](https://ejs.co/), but the syntax is common for Template Engine, so it should be relatively easy to understand.
 
-## Amazon側の画面からのリダイレクトによる、Universal Linksの発動
+## Triggering Universal Links by redirecting from Amazon's screen
 
 <img src="docimg/universallink.png" width="500">  
 
-### Universal Linksについて
-Universal Linksについての詳細については、[こちら](./README_swv2app.md)に記載しております。
+### About Universal Links
+For more information about Universal Links, see [here](. /README_swv2app.md).
 
-Universal Linksの基本的な発動条件は「Safari/SFSafariView等でLinkをタップする」ことですが、iOSのバージョンやその他の条件によっては、ServerからのRedirectでも発動することがあります。  
-Universal Linksが発動しなかった場合には、指定されたURLに存在するファイルが通常通りに表示されます。  
+The basic condition for triggering Universal Links is "tapping the Link in Safari/SFSafariView etc.", but depending on the iOS version and other conditions, it may also be triggered by a Redirect from the Server.  
+If Universal Links is not triggered, files that exist at the specified URL will be displayed as usual.  
 
-### 救済ページを使った2段構えのUniversal Linksの発動
-本サンプルでは、Amazon側のページでログイン＆住所・支払い方法の選択をしたあとのリダイレクトでUniversal Linksが発動するURLを指定していますが、上記の理由により、ここでは発動しない場合もあり得ます。  
+### Triggering two-stage Universal Links with a rescue page
+In this sample, we have specified a URL where Universal Links will be triggered by a redirect after the user logs in and selects an address and payment method on the Amazon page, but for the reasons mentioned above, it is possible that Universal Links will not be triggered here.  
 
-本サンプルではその場合の備えとして、発動しなかった場合には再度Universal Linksが発動するURLへのリンクを持つ、救済ページに自動的に遷移するように作られています。  
-ここではその仕組を説明します。  
+However, for the reasons mentioned above, it is possible that Universal Links will not be triggered here. As a precaution, this sample is designed to automatically redirect the user to a relief page that has a link to a URL where Universal Links will be triggered again if it is not triggered.  
+Here's how it works.  
 
-「自動的にAmazonログイン画面に遷移させるページ」で登場した、Universal Linksを発動させるURLのiOS版は、下記になります。  
+The iOS version of the URL that triggers Universal Links, which appeared in "The page that automatically transitions to the Amazon login screen," is as follows  
 https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-iosApp.html?token=XXXXXXXX
 
-上記でも書いたとおり、Universal Linksが発動しなかった場合には、指定されたURLに存在するファイルが表示されます。  
-このURLの先には下記の内容のHTMLファイルが置かれております。  
+As mentioned above, if Universal Links is not triggered, the file that exists at the specified URL will be displayed.  
+The following HTML file is placed at the end of this URL.  
 ```html
-<!-- nodejs/linksの下にも同じものが置かれています。 -->
+<! -- The same thing is placed under nodejs/links. -->
+
+As written above, if Universal Links is not triggered, the file that exists at the specified URL will be displayed.  
+The following HTML file is placed at the end of this URL.  
+```html
+<! -- The same thing is placed under nodejs/links. -->
 
 <html>
     <script>
         location.href = "https://localhost:3443/static/next.html" + location.search;
     </script>
 </html>
-```
+````
 
-こちらはファイルにアクセス時に指定されたURLパラメタを付与した上で、「next.html」にリダイレクトしています。  
-Note: ↑はlocal環境用なのでリダイレクト先が「https://localhost:3443/static/next.html 」になっていますが、こちらは本番・各テスト等の環境に応じて変更する必要があります。  
-「next.html」の中身が下記です。  
+This redirects the file to "next.html" with the URL parameter specified when the file was accessed.  
+Note: The above is for a local environment, so the redirect is set to "https://localhost:3443/static/next.html", but you may need to change this depending on your environment, such as production or testing.  
+The content of "next.html" is as follows.  
 ```html
-<!-- nodejs/static/next.htmlより抜粋 -->
+<! -- excerpt from nodejs/static/next.html -->
 
 <body data-gr-c-s-loaded="true">
 <div class="container">
-    <h3 class="my-4">Amazon Login 処理完了</h3>
-    「次へ」ボタンをタップして下さい。<br>
+    <h3 class="my-4">Amazon Login processing completed</h3>.
+    Please tap the "Next" button. <br>
     <br>
     <a id="nextButton" href="#" class="btn btn-info btn-lg btn-block">
-        次　へ
+        Next
     </a>
 </div>
 <script>
@@ -895,111 +902,112 @@ Note: ↑はlocal環境用なのでリダイレクト先が「https://localhost:
 </body>
 ```
 
-アクセス時に指定されたURLパラメタを付与したUniversal Linksを発動するURLを「id="nextButton"」のリンクに指定しております。  
-この仕組みにより、Universal Linksが発動しなかった場合にはこちらの画面が表示されます。この「次へ」のLinkをユーザがタップすることで、確実に条件を満たしてUniversal Linksを発動させることができます。  
+The URL that triggers Universal Links with the URL parameter specified at the time of access is specified in the "id="nextButton"" link.  
+With this mechanism, if Universal Links is not triggered, this screen will be displayed. By tapping on this "next" link, the user can ensure that the conditions are met and Universal Links are triggered.  
 
-## 購入ページ
+## Purchase page
 
 <img src="docimg/purchase.png" width="650">  
 
-### tokenチェックとViewControllerへの遷移先URLの設定
-Universal Linksにより起動される処理は、下記になります。  
+### token check and setting the destination URL to ViewController
+The following is the process triggered by Universal Links.  
 
 ```swift
-// AppDelegateより抜粋　(見やすくするため、一部加工しています。)
+// Excerpt from AppDelegate (Some parts have been modified for clarity.)
 
-    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([ UIUserActivityRestoring]?) -> Void) -> Bool {
         print("Universal Links!")
         if userActivity.activityType == NSUserActivityTypeBrowsingWeb {
             print(userActivity.webpageURL!)
             
-            // URLパラメタのパース
+            // Parse the URL parameters
             var urlParams = Dictionary<String, String>.init()
             for param in userActivity.webpageURL!.query!.components(separatedBy: "&") {
                 let kv = param.components(separatedBy: "=")
                 urlParams[kv[0]] = kv[1].removingPercentEncoding
             }
             
-            // 現在最前面のSFSafariViewとその裏のViewControllerを取得
+            // get the current foremost SFSafariView and the ViewController behind it
             var sfsv = UIApplication.shared.keyWindow?.rootViewController
             var vc:ViewController? = nil
-            while (sfsv!.presentedViewController) != nil {
+            while (sfsv!.presentedViewController) ! = nil {
                 if let v = sfsv as? ViewController {
                     vc = v
                 }
                 sfsv = sfsv!.presentedViewController
             }
             
-            // SFSafariViewのclose (この後、ViewController#viewDidLoadに処理が移る)
-            (sfsv as? SFSafariViewController)?.dismiss(animated: false, completion: nil)
+            // close SFSafariView (after this, the process will be transferred to ViewController#viewDidLoad)
+            (sfsv as? SFSafariViewController)? .dismiss(animated: false, completion: nil)
 
-            if(vc?.token! == urlParams["token"]!) { // tokenの一致判定
-                // 一致した場合には、購入ページを構築して表示
+            if(vc?.token! == urlParams["token"]!) { // determine token match
+                // If a match, build and display the purchase page
             } else {
-                // 不一致の場合には不正な遷移であるため、エラー処理
+                // if there is a mismatch, error handling because it is an invalid transition
             }
         }
-        return true
+        } return true
     }
 ```
-まず、Universal Links発動のURLに指定されていたURLパラメタを取得します。  
-次にApplicationの履歴階層から、この時点で最前面に表示されているSFSafariViewControllerと、そのすぐ下のViewControllerを取得します。  
-そして、SFSafariView(Secure WebView)をcloseします。  
 
-その後、「『Amazon Payボタン』画像クリック時の、Secure WebViewの起動処理」でViewControllerに保持したtokenと、Secure WebViewから受け渡されたtokenの一致判定を行っています。  
-このtokenの判定を行うことで、不正な遷移でこの処理が起動された場合に、それを検出してエラーとできるようになります。  
+First, get the URL parameter that was specified in the URL that triggered Universal Links.  
+Next, from the history hierarchy of the Application, get the SFSafariViewController that is displayed at the top at this point, and the ViewController immediately below it.  
+Then, close the SFSafariView (Secure WebView).  
 
-例えば、悪いユーザがSecure WebViewを起動する時の「自動的にAmazonログイン画面に遷移させるページ」へのURLを読み取って、メールなどで他のユーザに送ったとします。  
-送りつけられたユーザがiOS端末でメールのURLのリンクをクリックした場合、Safariが立ち上がってAmazon Payログインページに遷移してしまう可能性があります。  
-もしそのままAmazon Payにログインして、住所・支払い方法選択も実施した場合、SafariならUniversal Linksも発動してしまいますので、同アプリをインストールしていればその後の購入フローも実行できることになってしまいます。  
-画面のFlowによってはこれが大きな問題になる可能性もあるため、本サンプルアプリでは念のためにtokenチェックを行っております。  
+After that, the matching judgment is made between the token held in the ViewController in "Processing the Startup of Secure WebView when the 'Amazon Pay Button' Image is Clicked" and the token passed from Secure WebView.  
+By judging the token, if this process is invoked with an invalid transition, it will be detected and an error will be generated.  
 
-tokenチェックにて問題がなかった場合には、購入ページを構築して表示します。  
-購入ページには配送先や金額などの情報が必要であるため、Server側の下記のような処理を呼び出してこれらを取得する必要があります。
+For example, let's say a bad user reads the URL to the "page that automatically transitions to the Amazon login screen" when launching Secure WebView, and sends it to another user via email.  
+If the user who was sent the URL clicks on the link in the email on their iOS device, Safari will launch and they may be redirected to the Amazon Pay login page.  
+If the user logs into Amazon Pay and selects an address and payment method, Safari will also trigger Universal Links, which means that if the user has the app installed, they will be able to execute the purchase flow afterwards.  
+Since this may become a big problem depending on the screen flow, we have checked the token in this sample app just in case.  
+
+If there is no problem with the token check, a purchase page will be built and displayed.  
+Since the purchase page needs information such as shipping address and amount, we need to call the following process on the server side to get these information.
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------------
 // Checkout Review Screen
 //-------------------------
 app.get('/sample/checkoutReview', async (req, res) => {
-    // 受注情報
+    // Order information
     let order = {host: req.headers.host, amazonCheckoutSessionId: req.query.amazonCheckoutSessionId,
         client: req.cookies.client, hd8: req.cookies.hd8, hd10: req.cookies.hd10, items: []};
     order.items.push({id: 'item0008', name: 'Fire HD8', price: 8980, num: parseInt(order.hd8)});
     order.items.push({id: 'item0010', name: 'Fire HD10', price: 15980, num: parseInt(order.hd10)});
-    order.items.forEach(item => item.summary = item.price * item.num); // 小計
-    order.price = order.items.map(item => item.summary).reduce((pre, cur) => pre + cur); // 合計金額
-    order.chargeAmount = Math.floor(order.price * 1.1); // 税込金額
+    order.items.forEach(item => item.summary = item.price * item.num); // Subtotal
+    order.price = order.items.map(item => item.summary).reduce((pre, cur) => pre + cur); // total amount
+    order.chargeAmount = Math.floor(order.price * 1.1); // amount including tax
 
-    // Amazon Pay受注情報
+    // Amazon Pay order information
     const payload = await apClient.getCheckoutSession(req.query.amazonCheckoutSessionId, 
         {'x-amz-pay-idempotency-key': uuid.v4().toString().replace(/-/g, '')});
     order.checkoutSession = JSON.parse(payload.body);
 
-    // Note: 一般的には受注情報はSessionやDBなどを使ってServer側に保持しますが、本サンプルではシンプルにするためにCookieを使用しています
+    // Note: In general, order information is kept on the Server side using Session or DB, but this sample uses Cookie for simplicity.
     res.cookie('session', JSON.stringify(order), {secure: true});
     
-    // TODO ↓の部分はJSONなど、アプリで受け取りやすい形式のデータを返却するよう、修正する。
+    // TODO Modify the ↓ part to return data in a format that is easy for the app to receive, such as JSON.
     // res.render('sample/checkoutReview.ejs', order);
 });
 ```
 
-cartの情報を計算して金額を出し、またAmazon Pay APIより住所情報等を取得し、返却します。
+It calculates the amount of money by calculating the cart information, and also retrieves the address information from Amazon Pay API and returns it.
 
-### 購入ボタンクリック時の処理
+### Processing when a purchase button is clicked
 
-購入ボタンのクリック時には、下記のようにServer側のCheckout Session Update APIが呼び出して、決済に必要な購入金額や事業者側の受注番号等の情報と、支払い処理ページ(後述)で自動的にリダイレクトされるURLを指定して、checkoutSessionに対してupdateする必要があります。
+When the purchase button is clicked, the Checkout Session Update API on the server side is called as shown below, and it is necessary to update the checkoutSession with information such as the purchase amount required for payment, the order number on the business side, and the URL that will be automatically redirected on the payment processing page (see below). CheckoutSession.
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-----------------------------
 // Checkout Session Update API
 //-----------------------------
 
-// 事業者側の受注番号の採番
+// Numbering of the order number on the business side
 const newMerchantReferenceId = function() {
     let currentNumber = 1;
     return function() {
@@ -1010,10 +1018,10 @@ const newMerchantReferenceId = function() {
 app.post('/sample/checkoutSession', async (req, res) => {
     let order = JSON.parse(req.cookies.session);
     const payload = await updateCheckoutSession({merchantReferenceId: newMerchantReferenceId(),
-        merchantStoreName: "MY-SHOP", noteToBuyer: "Thank you!", customInformation: "This isn't shared with Buyer", ...order});    
+        merchantStoreName: "MY-SHOP", noteToBuyer: "Thank you!", customInformation: "This isn't shared with Buyer", . .order});    
     order.checkoutSession = JSON.parse(payload.body);
 
-    // Note: 一般的には受注情報はSessionやDBなどを使ってServer側に保持しますが、本サンプルではシンプルにするためにCookieを使用しています
+    // Note: In general, order information is kept on the Server side using Session or DB, but this sample uses Cookie for simplicity.
     res.cookie('session', JSON.stringify(order), {secure: true});
 
     res.writeHead(200, {'Content-Type': 'application/json; charset=UTF-8'});
@@ -1030,7 +1038,7 @@ async function updateCheckoutSession(data) {
         },
         paymentDetails: {
             paymentIntent: 'Authorize',
-            canHandlePendingAuthorization: false,
+            paymentIntent: 'Authorize', paymentIntent: 'Authorize', canHandlePendingAuthorization: false,
             chargeAmount: {
                 amount: '' + data.chargeAmount,
                 currencyCode: "JPY"
@@ -1048,14 +1056,19 @@ async function updateCheckoutSession(data) {
 }
 ```
 
-この、「支払い処理ページで自動的にリダイレクトされるURL」ですが、モバイルアプリではNativeコードを起動させる必要があるため、中継用ページ(後述)へのURLを指定します。  
-Amazon PayのAPIからの戻り値は、本サンプルアプリではそのままCheckout Session Update APIのResponseとして返却しています。  
-リダイレクトする必要があるURLは下記になります。
+This "URL to be automatically redirected on the payment processing page" is the URL to the relay page (see below), because the mobile app needs to launch the Native code.  
+The return value from the Amazon Pay API is directly returned as a Response of the Checkout Session Update API in this sample app.  
+The URLs that need to be redirected are as follows.
+
+
 ```
 $.webCheckoutDetails.amazonPayRedirectUrl
 ```
 
-Nativeアプリ側でこのResponseを受け取ったら、上記のURLをパラメタとして下記の処理を実行します。  
+
+
+When the Native app receives this Response, it will execute the following process using the above URL as a parameter.  
+
 
 ```swift
     func invokeAuthorizePage(_ url: String) {
@@ -1065,49 +1078,49 @@ Nativeアプリ側でこのResponseを受け取ったら、上記のURLをパラ
     }
 ```
 
-以上により、Amazon Pay APIのcheckoutSession更新処理の戻り値に含まれていたURLを、Secure WebViewで開くことができます。  
+With the above, you can open the URL included in the return value of the checkoutSession update process of Amazon Pay API with Secure WebView.  
 
-## 支払い処理ページ
+## Payment processing page
 
 <img src="docimg/payment.png" width="400">  
 
-上記Amazon Pay APIより渡されたURLに対してアクセスすると、支払い処理ページ(スピナーページとも呼ばれます)が表示されます。  
-この画面が表示されている間、Amazon側ではServer側で与信を含む支払いの処理が行われており、エラーハンドリングも含めてこちらの画面で処理されています。  
-支払いの処理が終わると、「購入ボタンクリック時の処理」で指定した中継用ページへのURLに自動的にリダイレクトされます。  
+When you access the URL passed from the Amazon Pay API above, the payment processing page (also known as the spinner page) will be displayed.  
+While this screen is being displayed, Amazon is processing the payment, including credit, on the Server side, and error handling is also being handled on this screen.  
+When the payment process is complete, you will be automatically redirected to the URL for the relay page specified in "Processing when clicking the purchase button".  
 
-### 中継用ページ
-中継用ページは下記のようになっています。  
+### Relay page
+The relay page looks like the following.  
 
 ```html
-<!-- nodejs/static/dispatcher.html より抜粋 -->
+<! -- excerpt from nodejs/static/dispatcher.html -->
     :
 <script type="text/javascript" charset="utf-8">
     function getURLParameter(name, source) {
-        return decodeURIComponent((new RegExp('[?|&amp;|#]' + name + '=' +
-                        '([^&;]+?)(&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
+        return decodeURIComponent((new RegExp('[? |&amp;|#]' + name + '=' +
+                        '([^&;]+?)') (&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
     }
 
     const client = getURLParameter("client", location.search);
-    location.href = client === 'iosApp' 
+    location.href = client === 'IOSApp' 
         ? 'amazonpay-ios-v2://thanks'
         : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end;';
-</script>
+</script
 
 <body></body>
 </html>
 ```
 
-ここではCustomURLSchemeを使って、JavaScriptよりアプリを起動しています。  
-CustomURLSchemeについての詳細については、[こちら](./README_swv2app.md)をご参照下さい。  
-Universal Linksとは違い、CustomURLSchemeでは間違って悪意のあるアプリが起動してしまう可能性がゼロではないため、ここでは「amazonCheckoutSessionId」のようなセンシティブな情報は渡さないようにします。  
+Here we are using CustomURLScheme to launch the app from JavaScript.  
+For more information about CustomURLScheme, please refer to [here](. /README_swv2app.md).  
+Unlike Universal Links, CustomURLScheme does not pass sensitive information such as "amazonCheckoutSessionId" because there is no possibility of accidentally launching a malicious app.  
 
-## Thanksページ
+## Thanks page
 
 <img src="docimg/thanks.png" width="600">  
 
-### CustomURLSchemeにより起動されるNativeの処理
+### Native processing triggered by CustomURLScheme
 
-上記CustomURLSchemeにより起動されるNativeの処理は、下記になります。
+The Native process invoked by the above CustomURLScheme is as follows.
 
 ```swift
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
@@ -1116,31 +1129,30 @@ Universal Linksとは違い、CustomURLSchemeでは間違って悪意のある�
         var sfsv = UIApplication.shared.keyWindow?.rootViewController
         var vc:ViewController? = nil
         
-        // 現在最前面のSFSafariViewとその裏のViewControllerを取得
-        while (sfsv!.presentedViewController) != nil {
+        // Get the current foremost SFSafariView and the ViewController behind it
+        while (sfsv!.presentedViewController) ! = nil {
             if let v = sfsv as? ViewController {
                 vc = v
             }
             sfsv = sfsv!.presentedViewController
         }
         
-        // SFSafariViewのclose (この後、ViewController#viewDidLoadに処理が移る)
-        (sfsv as? SFSafariViewController)?.dismiss(animated: false, completion: nil)
+        // close SFSafariView (after this, the process will be transferred to ViewController#viewDidLoad)
+        (sfsv as? SFSafariViewController)? .dismiss(animated: false, completion: nil)
 
-        // Thanksページを構築して表示
+        // build and display the thanks page
         
         return true
     }
-```
+````
+From the Application history hierarchy, retrieve the SFSafariViewController that is displayed on the front page at this point, and the ViewController immediately below it.  
+Next, close the SFSafariView (Secure WebView). This will move the process to ViewController#viewDidLoad immediately below.  
+Then, the process of constructing and displaying the Thanks page is performed.
 
-Applicationの履歴階層から、この時点で最前面に表示されているSFSafariViewControllerと、そのすぐ下のViewControllerを取得します。  
-次に、SFSafariView(Secure WebView)をcloseします。これにより、すぐ下のViewController#viewDidLoadに処理が移ります。  
-そしてThanksページを構築して表示する処理を行います。
-
-このとき、checkoutSessionに対して「completeCheckoutSession」を呼び出して完了させる必要があるため、Server側の処理を呼び出して下記を実行して下さい。
+At this point, we need to call "completeCheckoutSession" for the checkoutSession to complete it, so please call the Server side process and execute the following.
 
 ```js
-// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+// Excerpt from nodejs/app.js (Some parts have been modified for easier viewing.)
 
 //-------------------
 // Thanks Screen
@@ -1153,8 +1165,8 @@ app.get('/sample/thanks', async (req, res) => {
             currencyCode: "JPY"
         }
     });
-    // res.render('sample/thanks.ejs', order); // この部分はJSONなど、アプリで受け取りやすい形式のデータを返却するよう、修正する。
+    // res.render('sample/thanks.ejs', order); // Modify this part to return the data in a format that is easy for the app to receive, such as JSON.
 });
-```
+````
 
-本サンプルアプリをベースとしたNativeアプリの一連の流れとしては、以上となります。
+The above is a series of steps for a Native app based on this sample app.

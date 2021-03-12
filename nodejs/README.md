@@ -1,56 +1,56 @@
-# Amazon Pay モバイル サンプルアプリ Webアプリケーション側の実装について
-本サンプルアプリ全体の、Webアプリケーション側の実装です。
+# Amazon Pay Mobile Sample App Web Application Side Implementation
+This is the implementation of the web application side of the entire sample application.
 
-## 動作環境
-nodejs: v12.16.1 以上  
-※ おそらくもっと下のVersionでも動作しますが、動作テストはしていません。  
-(参考) インストーラー & package managerを使ったインストール:  
+## Operating environment
+nodejs: v12.16.1 or higher  
+We have not tested it, though it will probably work with a lower version.  
+(Reference) Installation using the installer & package manager:  
   - https://nodejs.org/ja/download/
   - https://nodejs.org/ja/download/package-manager/
 
-## 概要
-本Webアプリケーションでは、WebView・Secure WebViewからのrequest受付・画面の出力 及び 画面遷移・Amazon Pay APIの呼出＆決済処理等を行っております。  
-より詳細な動作については、[android](../android/README.md)、[ios](../ios/README.md)側の説明や、コードをご参照下さい。
+## Overview
+This web application accepts requests from WebView and Secure WebView, outputs screens, transitions screens, calls Amazon Pay API, and processes payments.  
+For more details, please refer to [android](... /android/README.md), [ios](. /ios/README.md) for more details.
 
-# server側のインストール
+# Install the server side.
 
-## リポジトリのclone
-もしまだであれば、まずは本リポジトリをcloneして下さい。  
-```
+## clone the repository
+If you haven't already, please clone this repository first.  
+````
 git clone https://github.com/amazonpay-labs/amazonpay-sample-app-v2.git
 ```
-cloneされてできたディレクトリの下の「nodejs」ディレクトリの下が、こちらのWebアプリケーションのプロジェクトになります。  
+Under the cloned directory, under the "nodejs" directory is the project for this web application.  
 
-## Seller Centralでのアプリケーション作成・設定
-nodejs/keys/template ディレクトリ下の、
+## Create and configure the application in Seller Central
+Under the nodejs/keys/template directory, add
   - keyinfo.js  
   - privateKey.pem
 
-を一階層上の nodejs/keys ディレクトリ直下にコピーします。  
+under the nodejs/keys/template directory to a directory directly under the nodejs/keys directory one level up.  
 
-[Seller Central](https://sellercentral.amazon.co.jp/)にて、本サンプル用にアプリケーションを用意し、[こちら](https://amazonpaycheckoutintegrationguide.s3.amazonaws.com/amazon-pay-checkout/get-set-up-for-integration.html#4-get-your-public-key-id)を参考に、Merchant ID, Public Key ID, Store ID, Private Keyを取得し、それぞれ下記にコピーします。
-  * Merchant ID: nodejs/keys/keyinfo.js の merchantId
-  * Public Key ID: nodejs/keys/keyinfo.js の publicKeyId
-  * Store ID: nodejs/keys/keyinfo.js の storeId
+Prepare an application for this sample at [Seller Central](https://sellercentral.amazon.co.jp/) and [here](https://amazonpaycheckoutintegrationguide.s3. amazonaws.com/amazon-pay-checkout/get-set-up-for-integration.html#4-get-your-public-key-id) to obtain the Merchant ID, Public Key ID, Store ID, Store ID, and Private Key, respectively, and copy them to the following
+  * Merchant ID: merchantId from nodejs/keys/keyinfo.js
+  * Public Key ID: publicKeyId in nodejs/keys/keyinfo.js
+  Store ID: storeId in nodejs/keys/keyinfo.js * Private Key: storeId in nodejs/keys/keyinfo.js
   * Private Key: nodejs/keys/privateKey.pem
 
-## Webサーバーのhttps設定
-[こちら](./ssl/README.md)のコマンドを実行し、https通信用の鍵と証明書を作成します。
+## Configure https settings for web server
+[here](. /ssl/README.md) to create a key and certificate for https communication.
 
-## 依存モジュールのインストール
-本ディレクトリにて、下記のコマンドを実行して依存モジュールをインストールします。
+## Install the dependent modules
+In this directory, execute the following command to install the dependent modules.
 ```sh
 npm i
-```
+````
 
-## サーバーの起動
-本ディレクトリにて、下記コマンドを実行します。
+## Start the server
+Execute the following command in this directory.
 ```sh
 node app.js
 ```
 
-### browserでのテスト
-[https://localhost:3443/sample/cart](https://localhost:3443/sample/cart) にアクセスします。セキュリティの警告を無視してすすめると、下記画面が表示されます。
+### Test in browser
+Go to [https://localhost:3443/sample/cart](https://localhost:3443/sample/cart). If you ignore the security warning and proceed, you will see the following screen.
 ![](docimg/browser.png)
 
-本サンプルアプリはPC/Mobile上のブラウザでも動作しますので、アプリの動作の確認や挙動の理解にご活用ください。
+This sample application will also work in a browser on PC/Mobile, so please use it to check the operation of the application and understand its behavior.

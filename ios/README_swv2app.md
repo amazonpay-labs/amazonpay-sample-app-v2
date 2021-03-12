@@ -1,30 +1,30 @@
-# Secure WebViewからアプリを起動する技術
-本サンプルアプリではSecure WebViewからアプリを起動するために、「Universal Links」「CustomURLScheme」の２つを使用しており、それぞれ下記のメリット/デメリットがあります。
+# Technology to launch apps from Secure WebView
+This sample app uses "Universal Links" and "CustomURLScheme" to launch the app from Secure WebView, which have the following merits/demerits respectively.
 - Universal Links  
-  - メリット : 確実に指定したモバイルアプリを起動できるため、Secureである
-  - デメリット : ユーザがLinkをタップしたときにしか発動しない
+  - Merit : Secure, because the specified mobile app can be launched without fail.
+  - Demerit : Triggered only when the user taps the Link.
 - CustomURLScheme
-  - メリット : JavaScriptからでも発動できる
-  - デメリット : 仕組み上、悪意のあるアプリが代わりに起動してしまうリスクを完全には排除できない
+  - Merit : Can be triggered by JavaScript
+  - Demerit : Cannot completely eliminate the risk that a malicious app will be launched instead of the user.
 
-本サンプルアプリではこれらの特性を考慮して、それぞれを活用しております。  
-それぞれについて、下記に説明します。
+In this sample application, we have taken these characteristics into consideration and used each of them.  
+Each of them is explained below.
 
 ## Universal Links
-Universal Linksとは、特定のURLのLinkがSafari上でタップされたときに登録されたアプリを起動できる機能です。  
-その特定のURLとモバイルアプリとのMappingはJSONファイルで定義されます。  
-そのJSONファイルはモバイルアプリ開発者が管理するServer上に置かれて、モバイルアプリがInstall/Updateされたタイミングでこの情報がInternet経由で読み込まれます。  
-そのServerがクラックされない限りはURLとモバイルアプリのMappingは確実に維持されるため、悪意のあるアプリが間違って起動されてしまう心配はありません。  
+Universal Links is a feature that allows you to launch a registered app when a specific URL Link is tapped on Safari.  
+The mapping between that specific URL and the mobile app is defined in a JSON file.  
+The JSON file is placed on a Server managed by the mobile app developer, and this information is loaded via the Internet when the mobile app is installed/updated.  
+As long as the Server is not cracked, the mapping between the URL and the mobile app will be maintained without fail, so there is no need to worry about a malicious app being launched by mistake.  
 
-URLとアプリとのMappingを行うJSONファイルは、下記のようになります。  
+The JSON file for mapping the URL to the app looks like the following.  
 
 ```json
 {
     "applinks": {
         "apps": [],
-        "details": [
+        "details": [], 
             {
-                "appID":"XXXXXXXX.com.amazon.pay.sample.iOS-App-v2",
+                "appID": "XXXXXXXXX.com.amazon.pay.sample.iOS-App-v2",
                 "paths":[ "*" ]
             }
         ]
@@ -32,39 +32,39 @@ URLとアプリとのMappingを行うJSONファイルは、下記のようにな
 }
 ```
 
-こちらのJSONファイル内の「appID」は、"{TeamID}.{Bundle Identifier}"で構成されます。  
-TeamIDは、ご自身のAppleアカウントでApple Developer Centerにログインし、「Membership」→ 「Team ID」で確認できます。  
-またBundle Identifierは、Xcodeで設定の「General」「Signing & Capabilities」等で確認できます。  
+The "appID" in the JSON file here consists of "{TeamID}. {Bundle Identifier}".  
+You can check your TeamID by logging in to the Apple Developer Center with your Apple account and clicking "Membership" -> "Team ID".  
+You can also check the Bundle Identifier in "General" and "Signing & Capabilities" of the settings in Xcode.  
 
-こうして作成したファイルは、「apple-app-site-association」という名前で保存します。   
+Save the file created in this way as "apple-app-site-association".   
 
-この「apple-app-site-association」を、自身が管理するServerに配置します。  
-このときの注意点としては、  
-  * DomainがWebアプリケーションとは違うサーバーにすること  
-  * httpsでファイルにアクセスできること(自己証明書ではなく、iOSが認識できる正しい証明書を使っていること)  
-  * ファイル取得時のContent-Typeは「application/json」とすること  
-  * ファイルは「ドメインのルート/.well-known/」の下に配置すること  
+Place this "apple-app-site-association" in the Server that you are managing.  
+The points to note at this point are  
+  * Domain must be a different server from the web application.  
+  * The file must be accessible via https (using a valid certificate that iOS can recognize, not a self-certificate).  
+  * The Content-Type when retrieving the file must be "application/json".  
+  * The file must be placed under "domain root/.well-known/".  
 
-などがあります。  
-[こちら](https://dev.classmethod.jp/articles/universal-links/)の方のように、[Amazon S3](https://aws.amazon.com/jp/s3/)を使うと比較的簡単にできますので、ご参考にして見て下さい。  
-※ 本サンプルでも、Amazon S3を使って「apple-app-site-association」を配置しております。  
+etc.  
+It is relatively easy to use [Amazon S3](https://aws.amazon.com/jp/s3/) as shown in [here](https://dev.classmethod.jp/articles/universal-links/), so please refer to it and Please take a look.  
+In this sample, we also use Amazon S3 to place "apple-app-site-association".  
 
-そしてAssociated Domainsを追加します。  
-Xcodeで「Signing & Capabilities」を開き、左上の「+ Capability」から「Associated Domains」を追加します。  
-※ この操作により、Apple Developer Centerで「Certificates, Identifiers & Profiles」→ 「Identifiers」にアプリのBundle Identifierが自動的に登録されます。  
+Then add the Associated Domains.  
+Open "Signing & Capabilities" in Xcode, and add "Associated Domains" from "+ Capability" in the upper left corner.  
+This operation will automatically register the Bundle Identifier of the app in "Certificates, Identifiers & Profiles" -> "Identifiers" in the Apple Developer Center.  
 
 ![](docimg/xcode_associateddomains.png)  
 
-こうして表示されたAssociated Domainsに、上記画像のように下記二つを登録します。
-  * applinks:{上記「apple-app-site-association」を配置したサーバーのドメイン}  
-  * webcredentials:{上記「apple-app-site-association」を配置したサーバーのドメイン}  
+Register the following two items in Associated Domains as shown in the image above.
+  * applinks:{domain of the server where the above "apple-app-site-association" is placed}  
+  * webcredentials:{the domain of the server where the above "apple-app-site-association" is located}  
 
-ここまでで、Nativeコードを呼び出す準備が整いました。  
-後は「https://{'apple-app-site-association'を配置したサーバーのドメイン}」/...」というURLのLinkをSFSafariViewController上でタップすれば、AppDelegate.swiftに追加した下記のコードが実行されます。
+Now we are ready to call the native code.  
+Now we need to create a Link with the URL "https://{domain of the server where the 'apple-app-site-association' is located}"/...". on SFSafariViewController, the following code added to AppDelegate.swift will be executed.
 
 ```swift
-// AppDelegate.swiftより抜粋
-    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void) -> Bool {
+// Excerpt from AppDelegate.swift
+    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([ UIUserActivityRestoring]?) -> Void) -> Bool {
         print("Universal Links!")
         if userActivity.activityType == NSUserActivityTypeBrowsingWeb {
             print(userActivity.webpageURL!)
@@ -72,11 +72,11 @@ Xcodeで「Signing & Capabilities」を開き、左上の「+ Capability」か�
         }
         return true;
     }
-```
+````
 
-Note: 上記はSwift5の場合。Swift4以前の場合は下記。
+Note: The above is for Swift 5, and the following for Swift 4 and earlier.
 ```swift
-    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([Any]?) -> Void) -> Bool {
+    func application(_ application: UIApplication, continue userActivity: NSUserActivity, restorationHandler: @escaping ([Any]? -> Void) -> Bool {
         print("Universal Links!")
         if userActivity.activityType == NSUserActivityTypeBrowsingWeb {
             print(userActivity.webpageURL!)
@@ -84,38 +84,38 @@ Note: 上記はSwift5の場合。Swift4以前の場合は下記。
         }
         return true;
     }
-```
+````
 
-なお、こちらのUniversal Linksにより上記コードが起動するのは、上にも書いたとおり「https://{'apple-app-site-association'を配置したサーバーのドメイン}/...」というURLのLinkをタップしたときだけで、JavaScriptなどでこのURLをloadしても起動しません。  
+As mentioned above, the above code is only activated when you tap on the URL "https://{domain of the server where 'apple-app-site-association' is located}/...". It will not be activated even if this URL is loaded by JavaScript.  
 
 ## CustomeURLScheme
-「URL Scheme」とは、「http」「https」「ftp」などの、URLの先頭部分のことです。iOSから呼び出してもらえるように自分が開発したモバイルアプリ専用のURL Schemeを定義する仕組みが、CustomURLSchemeです。
+CustomURLScheme is a mechanism to define a URL scheme for your mobile app to be called from iOS.
 
-XCode上で「info」の「URL Types」の下記の「+」をクリックします。
+On XCode, click the following "+" in "URL Types" under "info".
 
 ![](docimg/xcode_customurlscheme1.png)  
 
-すると下記の入力フォームが表示されます。  
-identifierは識別文字列で、端末内でユニークになる文字列を入力します。  
-URL Schemesに、自分のモバイルアプリを呼び出すための値を入力します。他のモバイルアプリと偶然かぶってしまうことがないよう、充分な長さの文字列を指定することをおすすめします。
+Then the following input form will be displayed.  
+For identifier, enter a string that will be unique within the device.  
+In URL Schemes, enter a value to call your mobile app. It is recommended to specify a string that is long enough to avoid accidental confusion with other mobile apps.
 
 ![](docimg/xcode_customurlscheme2.png)  
 
-ここまでで、Nativeコードを呼び出す準備が整いました。  
-後は「{上でXCode上で定義したURL Schemes}://...」というURLをSFSafariViewController上で呼び出せば、AppDelegate.swiftに追加した下記のコードが実行されるはずです。
+Now we are ready to call the Native code.  
+Now we need to add the URL "{URL Schemes defined above in XCode}://..." to the SFSafariView. on SFSafariViewController, and the following code added to AppDelegate.swift will be executed.
 
 ```swift
-// AppDelegate.swiftより抜粋
+// Excerpt from AppDelegate.swift
     func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
         print("Custom URL Scheme!")
                 :
     }
-```
+````
 
-本サンプルアプリでは、こちらを下記のようにJavaScriptを使って起動しています。
+In this sample application, this one is launched using JavaScript as shown below.
 
 ```html
-<!-- nodejs/views/static/dispatcher.htmlより抜粋(見やすくするため、一部加工しています。) -->
+<! -- Excerpt from nodejs/views/static/dispatcher.html (Some parts have been modified to make it easier to read.) --> <!
 <script type="text/javascript" charset="utf-8">
         :
     location.href = "amazonpay-ios-v2://thanks";
@@ -123,4 +123,4 @@ URL Schemesに、自分のモバイルアプリを呼び出すための値を入
 </script>
 ```
 
-上記設定方法からも分かる通り、悪意のあるモバイルアプリが全く同じURL Schemeを登録してしまうことを完全に防ぐ方法はなく、また同一端末上に同じURL Schemeを登録したアプリが複数あった場合の挙動は規定されておらず、センシティブな情報などをモバイルアプリ側に送信する手段としては不向きです。
+As you can see from the above configuration, there is no way to completely prevent a malicious mobile app from registering the exact same URL Scheme, and there is no regulation on how to behave when there are multiple apps with the same URL Scheme registered on the same device, making it unsuitable as a means to send sensitive information to the mobile app side.

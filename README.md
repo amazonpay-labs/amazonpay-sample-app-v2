@@ -22,7 +22,7 @@ This sample application consists of three projects: [nodejs](nodejs/README.md) (
 
 # System Requirements
 Android 6 or later: Google Chrome 64 or later  
-iOS version 11 or later
+iOS version 11 or later: Safari Mobile 11 or later  
 
 # Overview
 This sample application works on both Android and iOS as shown in the movie below.

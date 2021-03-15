@@ -1,23 +1,22 @@
 # Amazon Pay Mobile Sample App iOS App Implementation
-This is the implementation of the iOS app side of this sample app. For instructions on how to install and run the app, please refer to [here](. /README_install.md).
+This is the implementation of the iOS app side of this sample app. For instructions on how to install and run the app, please refer to [here](./README_install.md).
 
 # Operating environment
-iOS version 11.2 or later: Safari Mobile 11 or later  
-[Reference] https://pay.amazon.com/jp/help/202030010
+iOS version 11 or later: Safari Mobile 11 or later  
 
 # Other prerequisites
 This sample app uses a technology called Universal Links, and the following conditions are required to use this technology.
  - You must be registered with the [Apple Developer Program](https://developer.apple.com/jp/programs/). 
  - Since the configuration file must be placed in a location on the Web that can be properly accessed using https, you must have a server with a different domain from the EC site, or an account with a cloud service such as AWS.  
-   Note: In this sample application, [Amazon S3](https://aws.amazon.com/jp/s3/) is used. It is easy to get an account on the Internet, is widely used around the world, has a lot of information on how to use it, and has a free usage limit of 5GB for 12 months.  
+   Note: In this sample application, [Amazon S3](https://aws.amazon.com/jp/s3/) is used. It is easy to get an account on the Internet, is widely used around the world, has a lot of information on how to use it, and has a free usage limit of 5GB for 12 months, so it is recommended.  
 
 # Overview
 This sample application will work as shown in the video below.
 
 <img src="docimg/ios-movie.gif" width="300">  
 
-The details of the flow can be found in [flow-ios.xlsx](. /flow-ios.xlsx).  
-Based on this flow, I will explain the detailed implementation in the following sections.
+The details of the flow can be found in [flow-ios.xlsx](./flow-ios.xlsx).  
+Based on this flow, we will explain the detailed implementation in the following sections.
 
 # How to implement Amazon Pay - WebView app version
 
@@ -108,7 +107,7 @@ This is done in the following JavaScript.
 
 In the first decision, if the browser is a normal browser, the Amazon Pay process can be implemented as is, so the Amazon Pay button is loaded as usual.  
 In the case of iOS, we generate a node for the "Amazon Pay Button" image and add it under the "AmazonPayButton" node in the same screen.  
-The "Amazon Pay Button" image to be specified at this time is ". /nodejs/static/img/button_images". Please be careful not to specify a file name that begins with "Sandbox_" for the production environment.  
+The "Amazon Pay Button" image to be specified at this time should be selected from the images under "./nodejs/static/img/button_images". Please be careful not to specify a file name that begins with "Sandbox_" for the production environment.  
 Also, when the generated node is clicked, we add an Event Handler that calls the native Callback with the Object that specifies "login" as a parameter.  
 
 ### Start Secure WebView when the "Amazon Pay Button" image is clicked.
@@ -141,7 +140,7 @@ extension ViewController: WKScriptMessageHandler {
         }
     }
 }
-````
+```
 
 The process of "invokeAppLoginPage()" is as follows.  
 ```swift
@@ -156,7 +155,7 @@ The process of "invokeAppLoginPage()" is as follows.
         let safariView = SFSafariViewController(url: NSURL(string: "https://localhost:3443/appLogin?client=iosApp&token=\(token!)")! as URL)
         present(safariView, animated: true, completion: nil)
     }
-```.
+```
 
 You can see that the URL is specified to launch SFSafariViewController (Secure WebView on iOS).  
 In addition, we have generated a UUID (version 4) and named it "token", and set it as a parameter to the Field and URL on the Native side, but the reason for this is explained later.  
@@ -168,9 +167,9 @@ In addition, we have generated a UUID (version 4) and named it "token", and set 
 This screen transitions to the Amazon login screen by using JavaScript to call the "initCheckout" method prepared by Amazon Pay.  
 
 ### Preparing to output the Amazon Pay button on the Server side
-In preparation for outputting the Amazon Pay button, we will generate the payload and signature required for outputting the Amazon Pay button on the Server side, and pass in the other configuration values.  
+In preparation for outputting the Amazon Pay button, we will generate the payload and signature required for outputting the Amazon Pay button on the Server side, and pass them with the other configuration values.
 
-``js
+```js
 // Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------
@@ -196,10 +195,10 @@ function createPayload(url) {
         storeId: keyinfo.storeId
     };
 }
-````
+```
 
-The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/... in the specified URL will be the redirect destination after logging in to Amazon Pay & selecting the address and payment method.  
-This URL is used to launch the Native code from Secure WebView with the "Universal Links" technology described below.  
+The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/..." will be the redirect destination after logging in to Amazon Pay & selecting the address and payment method.  
+This URL is used to launch the Native code from Secure WebView with the "Universal Links" technology described later.  
 
 These values are passed as parameters to "appLogin.ejs" to generate HTML & CSS & JavaScript.  
 
@@ -222,33 +221,33 @@ These values are passed as parameters to "appLogin.ejs" to generate HTML & CSS &
             publicKeyId: '<%= publicKeyId %>' 
         }
     });    
-</script
+</script>
 ```
 
 This call to the "initCheckout" method automatically transitions to the Amazon Pay login screen.  
-This file is created using Template Engine called [EJS](https://ejs.co/), but the syntax is common for Template Engine, so it should be relatively easy to understand.  
+This file is created using Template Engine called [EJS](https://ejs.co/), and the syntax is common for Template Engine, so it should be relatively easy to understand.  
 
 ## Triggering Universal Links by redirecting from Amazon's screen
 
 <img src="docimg/universallink.png" width="500">  
 
 ### About Universal Links
-For more information about Universal Links, see [here](. /README_swv2app.md).
+For more information about Universal Links, see [here](./README_swv2app.md).
 
 The basic condition for triggering Universal Links is "tapping the Link in Safari/SFSafariView etc.", but depending on the iOS version and other conditions, it may also be triggered by a Redirect from the Server.  
-If Universal Links is not triggered, files that exist at the specified URL will be displayed as usual.  
+If Universal Links is not triggered, the file existing at the specified URL will be displayed as usual.  
 
 ### Triggering two-stage Universal Links with a rescue page
 In this sample, we have specified a URL where Universal Links will be triggered by a redirect after the user logs in and selects an address and payment method on the Amazon page, but for the reasons mentioned above, it is possible that Universal Links will not be triggered here.  
 
-However, for the reasons mentioned above, it is possible that Universal Links will not be triggered here. As a precaution, this sample is designed to automatically redirect the user to a relief page that has a link to a URL where Universal Links will be triggered again if it is not triggered.  
+As a precaution, this sample is designed to automatically redirect the user to a rescue page with a link to the URL where Universal Links will be triggered again if it is not triggered.  
 Here's how it works.  
 
-The iOS version of the URL that triggers Universal Links, which appeared in "The page that automatically transitions to the Amazon login screen," is as follows  
+The iOS version of the URL that triggers Universal Links, which appeared in "Page that automatically transitions to the Amazon login screen" is as follows  
 https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-iosApp.html?token=XXXXXXXX
 
 As mentioned above, if Universal Links is not triggered, the file that exists at the specified URL will be displayed.  
-The following HTML file is placed at the end of this URL.  
+An HTML file with the following contents is placed at the end of this URL.  
 ```html
 <! -- The same thing is placed under nodejs/links. -->
 
@@ -279,18 +278,17 @@ The content of "next.html" is as follows.
         "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" + location.search;
 </script>
 </body>
-````
+```
 
-The URL that triggers Universal Links with the URL parameter specified at the time of access is specified in the "id="nextButton"" link.  
-With this mechanism, if Universal Links is not triggered, this screen will be displayed. When the user taps on this "next" link, the conditions are met and Universal Links are triggered without fail.
-
+The URL that triggers Universal Links with the URL parameter specified at the time of access is specified in the "nextButton" link.  
+With this mechanism, if Universal Links is not triggered, this screen will be displayed. By tapping on the "next" link, you can ensure that the conditions are met and the Universal Links are triggered.
 
 ## Purchase page
 
 <img src="docimg/purchase.png" width="650">  
 
 ### token check and setting up the URL for the transition to ViewController
-The Naive code triggered by Universal Links is shown below.  
+The Naive code triggered by Universal Links is as follows.  
 
 ```swift
 // Excerpt from AppDelegate (Some parts have been modified for clarity.)
@@ -326,24 +324,24 @@ The Naive code triggered by Universal Links is shown below.
             }
 
             // close SFSafariView (after this, the process will be transferred to ViewController#viewDidLoad)
-            (sfsv as? SFSafariViewController)? .dismiss(animated: false, completion: nil)
+            (sfsv as? SFSafariViewController)?.dismiss(animated: false, completion: nil)
         }
         return true
     }
-````
+```
 First, get the URL parameter that was specified in the URL that triggered Universal Links.  
 Next, from the Application history hierarchy, get the SFSafariViewController that is displayed on the front page at this point, and the ViewController immediately below it.  
 
-After that, we perform a match judgment between the token held in the ViewController in "Secure WebView startup processing when the 'Amazon Pay button' image is clicked" and the token passed from Secure WebView.  
+After that, we perform a match judgment between the token held in the ViewController in "Start Secure WebView when the 'Amazon Pay Button' image is clicked" and the token passed from Secure WebView.  
 By judging the token, if this process is invoked with an invalid transition, it will be detected and an error will be generated.  
 
 For example, let's say a bad user reads the URL to the "page that automatically transitions to the Amazon login screen" when launching Secure WebView, and sends it to another user via email.  
-If the user who was sent the URL clicks on the link in the email on their iOS device, Safari will launch and they may be redirected to the Amazon Pay login page.  
-If the user logs into Amazon Pay and selects an address and payment method, Safari will also trigger Universal Links, which means that if the user has the app installed, they will be able to execute the purchase flow afterwards.  
-Since this could be a big problem depending on the screen flow, this sample app performs a token check just in case.  
+If the user who was sent the URL clicks on the link in the email on their iOS device, Safari may be launched and take them to the Amazon Pay login page.  
+If the user logs in to Amazon Pay and selects an address and payment method, Safari will also trigger Universal Links, which means that if the user has installed the app, they will be able to execute the purchase flow afterwards.  
+Since this may become a big problem depending on the implementation of the EC site, this sample app performs a token check just in case.  
 
 After the token check, set the URL of the purchase page to ViewController.  
-The URL parameter "amazonCheckoutSessionId" is given to the URL of the purchase page, but this is the exact same URL and the exact same conditions as the transition to the purchase page in the PC and Mobile browsers.  
+The URL parameter "amazonCheckoutSessionId" is given to the URL of the purchase page, which is the exact same URL and the exact same conditions as the transition to the purchase page in the PC and Mobile browsers.
 Therefore, there is no need to implement separate processes for "for mobile apps" and "for PC and Mobile browsers" when displaying the purchase page.  
 
 Finally, close the SFSafariView (Secure WebView). This will move the process to ViewController#viewDidLoad immediately below.  
@@ -369,7 +367,7 @@ At this point, the cart page is displayed in WebView, and the following JavaScri
     function loadUrl(url) {
         location.href = url;
     }
-````
+```
 
 On the Server side, the following will be executed.
 
@@ -399,7 +397,7 @@ app.get('/sample/checkoutReview', async (req, res) => {
     
     res.render('sample/checkoutReview.ejs', order);
 });
-````
+```
 
 It calculates the amount of money by calculating the cart information, gets the address information from Amazon Pay API, and passes it to the template engine to generate and display the screen.
 
@@ -420,7 +418,7 @@ When you click the buy button, the following script will be executed.
         })
         .then(
             :
-````
+```
 
 Ajax will call the following Server-side Checkout Session Update API.  
 
@@ -481,7 +479,7 @@ async function updateCheckoutSession(data) {
 ```
 
 Using Amazon Pay's API, we update the checkoutSession with information such as the purchase amount and the order number of the business, which are required for payment, and the URL that will be automatically redirected on the payment processing page (see below).  
-As for the "URL to be automatically redirected on the payment processing page," in the case of Browser, specify the URL of the Thanks page directly, and in the case of iOS and Android, specify the URL to the page for relay (see below).
+As for the "URL to be automatically redirected on the payment processing page" in the case of Browser, specify the URL of the Thanks page directly, and in the case of iOS and Android, specify the URL to the page for relay (sedescribed later).
 The return value from the Amazon Pay API is directly returned as a Response of the Checkout Session Update API.  
 
 When the Ajax Response is returned, the following will be executed.
@@ -517,7 +515,7 @@ When the Ajax Response is returned, the following will be executed.
             }
         );
     });
-```.
+```
 
 By checking the existence of the Callback Object passed to the WebView, the client environment is determined and the corresponding process is executed.  
 In this case, since we are on iOS, the following will be executed.
@@ -553,7 +551,7 @@ This will execute the following process on the Native side, using the string "au
             return
         }
     }
-````
+```
 
 The "invokeAuthorizePage" is as follows.
 
@@ -571,7 +569,7 @@ With the above, you can open the URL that was included in the return value of th
 <img src="docimg/payment.png" width="400">  
 
 When you access the URL passed from the Amazon Pay API above, the payment processing page (also known as the spinner page) will be displayed.  
-While this screen is being displayed, Amazon is processing the payment, including credit, on the Server side, and error handling is also being handled on this screen.  
+While this screen is being displayed, Amazon is processing the payment, including authorization, on the Server side, and error handling is also being handled on this screen.  
 When the payment process is complete, you will be automatically redirected to the URL for the relay page specified in "Processing when clicking the purchase button".  
 
 ### Relay page
@@ -582,23 +580,23 @@ The relay page looks like the following.
     :
 <script type="text/javascript" charset="utf-8">
     function getURLParameter(name, source) {
-        return decodeURIComponent((new RegExp('[? |&amp;|#]' + name + '=' +
-                        '([^&;]+?)') (&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
+        return decodeURIComponent((new RegExp('[?|&amp;|#]' + name + '=' +
+                        '([^&;]+?)(&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
     }
 
     const client = getURLParameter("client", location.search);
-    location.href = client === 'IOSApp' 
+    location.href = client === 'iosApp' 
         ? 'amazonpay-ios-v2://thanks'
         : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end;';
-</script
+</script>
 
 <body></body>
 </html>
 ```
 
 Here we are using CustomURLScheme to launch the app from JavaScript.  
-For more information about CustomURLScheme, please refer to [here](. /README_swv2app.md).  
-Unlike Universal Links, CustomURLScheme does not pass sensitive information such as "amazonCheckoutSessionId" because there is no possibility of accidentally launching a malicious app.  
+For more information about CustomURLScheme, please refer to [here](./README_swv2app.md).  
+Unlike Universal Links, there is possibility of accidentally launching a malicious app with CustomURLScheme, so we do not pass sensitive information such as "amazonCheckoutSessionId" here.  
 
 ## Thanks page
 
@@ -606,7 +604,7 @@ Unlike Universal Links, CustomURLScheme does not pass sensitive information such
 
 ### Native processing triggered by CustomURLScheme
 
-The native process invoked by the above CustomURLScheme is as follows.
+The following is the Native process invoked by the above CustomURLScheme.
 
 ```swift
 // Excerpt from AppDelegate.swift
@@ -633,7 +631,7 @@ The native process invoked by the above CustomURLScheme is as follows.
         
         return true
     }
-````
+```
 
 From the Application history hierarchy, get the SFSafariViewController that is displayed on the topmost page at this point, and the ViewController just below it.  
 Next, set the URL of the Thanks page to the ViewController.  
@@ -660,7 +658,7 @@ At this point, the purchase page is displayed in the WebView, and the following 
     function loadUrl(url) {
         location.href = url;
     }
-````
+```
 
 On the Server side, the following will be executed.
 
@@ -691,7 +689,7 @@ This is the end of the series of steps for this sample application.
 When calling the Secure WebView startup process in JavaScript from WebView, a function called "coverScreen" is called immediately before as shown below to make the screen blank.  
 
 ```html
-<! -- Excerpt from nodejs/views/sample/cart.ejs (Some parts have been modified for clarity.) --> <!
+<!-- Excerpt from nodejs/views/sample/cart.ejs (Some parts have been modified for clarity.) -->
                 :
 <body data-gr-c-s-loaded="true">
 <div id="white_cover" style="width:100%; height:100vh; background-color:#fff; position:relative; z-index:1000; display:none;"></div>
@@ -716,7 +714,7 @@ When calling the Secure WebView startup process in JavaScript from WebView, a fu
     }
 </script>
                 :
-````
+```
 
 If you don't call this function, your screen will look like the following when Secure WebView is closed.  
 <img src="docimg/nocover-version.gif" width="300">  
@@ -777,7 +775,7 @@ This page outputs the Amazon Pay button behind the scenes, and automatically tra
 ### Preparing to output the Amazon Pay button on the server side
 In order to prepare for the output of the Amazon Pay button, we will generate the payload and signature necessary for the output of the Amazon Pay button on the server side, and pass in the other configuration values.  
 
-``js
+```js
 // Excerpt from nodejs/app.js (Some parts have been modified for clarity.)
 
 //-------------------
@@ -803,7 +801,7 @@ function createPayload(url) {
         storeId: keyinfo.storeId
     };
 }
-````
+```
 
 The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/... in the specified URL will be the redirect destination after logging in to Amazon Pay & selecting the address and payment method.  
 This URL is used to launch the app from Secure WebView using the "Universal Links" technology described below.  
@@ -871,20 +869,20 @@ The following HTML file is placed at the end of this URL.
 As written above, if Universal Links is not triggered, the file that exists at the specified URL will be displayed.  
 The following HTML file is placed at the end of this URL.  
 ```html
-<! -- The same thing is placed under nodejs/links. -->
+<!-- The same thing is placed under nodejs/links. -->
 
 <html>
     <script>
         location.href = "https://localhost:3443/static/next.html" + location.search;
     </script>
 </html>
-````
+```
 
 This redirects the file to "next.html" with the URL parameter specified when the file was accessed.  
 Note: The above is for a local environment, so the redirect is set to "https://localhost:3443/static/next.html", but you may need to change this depending on your environment, such as production or testing.  
 The content of "next.html" is as follows.  
 ```html
-<! -- excerpt from nodejs/static/next.html -->
+<!-- excerpt from nodejs/static/next.html -->
 
 <body data-gr-c-s-loaded="true">
 <div class="container">
@@ -1092,7 +1090,7 @@ When the payment process is complete, you will be automatically redirected to th
 The relay page looks like the following.  
 
 ```html
-<! -- excerpt from nodejs/static/dispatcher.html -->
+<!-- excerpt from nodejs/static/dispatcher.html -->
     :
 <script type="text/javascript" charset="utf-8">
     function getURLParameter(name, source) {
@@ -1144,7 +1142,8 @@ The Native process invoked by the above CustomURLScheme is as follows.
         
         return true
     }
-````
+```
+
 From the Application history hierarchy, retrieve the SFSafariViewController that is displayed on the front page at this point, and the ViewController immediately below it.  
 Next, close the SFSafariView (Secure WebView). This will move the process to ViewController#viewDidLoad immediately below.  
 Then, the process of constructing and displaying the Thanks page is performed.
@@ -1167,6 +1166,6 @@ app.get('/sample/thanks', async (req, res) => {
     });
     // res.render('sample/thanks.ejs', order); // Modify this part to return the data in a format that is easy for the app to receive, such as JSON.
 });
-````
+```
 
 The above is a series of steps for a Native app based on this sample app.

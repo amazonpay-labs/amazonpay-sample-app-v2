@@ -67,7 +67,7 @@ If the verification on the Emulator is OK, the verification OK message will be o
 ![androidstudio-welcome](docimg/applinks-14.png)
 
 Now we are ready to call the Native code.  
-All that's left to do is to create a Link with the URL "https://{domain of the server where 'aplinks.json' was placed}"/...". on Chrome Custom Tabs, and the code you added to the Activity you specified during the process should be executed.  
+By tapping a Link with the URL "https://{domain of the server where 'aplinks.json' was placed}"/..." on Chrome Custom Tabs, the code you added to the Activity you specified during the process should be executed.  
 
 For reference, here is the Native code for this sample.
 

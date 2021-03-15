@@ -1,11 +1,11 @@
 # Technology to launch apps from Secure WebView
-This sample app uses "Universal Links" and "CustomURLScheme" to launch the app from Secure WebView, which have the following merits/demerits respectively.
+This sample app uses "Universal Links" and "CustomURLScheme" to launch the app from Secure WebView, which have the following pros/cons respectively.
 - Universal Links  
-  - Merit : Secure, because the specified mobile app can be launched without fail.
-  - Demerit : Triggered only when the user taps the Link.
+  - Pros : Secure, because the specified mobile app can be launched without fail.
+  - Cons : Triggered only when the user taps the Link.
 - CustomURLScheme
-  - Merit : Can be triggered by JavaScript
-  - Demerit : Cannot completely eliminate the risk that a malicious app will be launched instead of the user.
+  - Pros : Can be triggered by JavaScript
+  - Cons : Cannot completely eliminate the risk that a malicious app will be launched instead of the user.
 
 In this sample application, we have taken these characteristics into consideration and used each of them.  
 Each of them is explained below.
@@ -22,7 +22,7 @@ The JSON file for mapping the URL to the app looks like the following.
 {
     "applinks": {
         "apps": [],
-        "details": [], 
+        "details": [
             {
                 "appID": "XXXXXXXXX.com.amazon.pay.sample.iOS-App-v2",
                 "paths":[ "*" ]
@@ -32,7 +32,7 @@ The JSON file for mapping the URL to the app looks like the following.
 }
 ```
 
-The "appID" in the JSON file here consists of "{TeamID}. {Bundle Identifier}".  
+The "appID" in the JSON file here consists of "{TeamID}.{Bundle Identifier}".  
 You can check your TeamID by logging in to the Apple Developer Center with your Apple account and clicking "Membership" -> "Team ID".  
 You can also check the Bundle Identifier in "General" and "Signing & Capabilities" of the settings in Xcode.  
 
@@ -43,24 +43,23 @@ The points to note at this point are
   * Domain must be a different server from the web application.  
   * The file must be accessible via https (using a valid certificate that iOS can recognize, not a self-certificate).  
   * The Content-Type when retrieving the file must be "application/json".  
-  * The file must be placed under "domain root/.well-known/".  
+  * The file should be placed the directory, "/.well-known/", directly under the root of the domain.  
 
-etc.  
-It is relatively easy to use [Amazon S3](https://aws.amazon.com/jp/s3/) as shown in [here](https://dev.classmethod.jp/articles/universal-links/), so please refer to it and Please take a look.  
+You can easily fulfill the conditions above by using [Amazon S3](https://aws.amazon.com/jp/s3/).  
 In this sample, we also use Amazon S3 to place "apple-app-site-association".  
 
 Then add the Associated Domains.  
-Open "Signing & Capabilities" in Xcode, and add "Associated Domains" from "+ Capability" in the upper left corner.  
+Open "Signing & Capabilities" in Xcode, and add "Associated Domains" from "+Capability" in the upper left corner.  
 This operation will automatically register the Bundle Identifier of the app in "Certificates, Identifiers & Profiles" -> "Identifiers" in the Apple Developer Center.  
 
 ![](docimg/xcode_associateddomains.png)  
 
 Register the following two items in Associated Domains as shown in the image above.
   * applinks:{domain of the server where the above "apple-app-site-association" is placed}  
-  * webcredentials:{the domain of the server where the above "apple-app-site-association" is located}  
+  * webcredentials:{the domain of the server where the above "apple-app-site-association" is placed}  
 
 Now we are ready to call the native code.  
-Now we need to create a Link with the URL "https://{domain of the server where the 'apple-app-site-association' is located}"/...". on SFSafariViewController, the following code added to AppDelegate.swift will be executed.
+By tapping a Link with the URL "https://{domain of the server where the 'apple-app-site-association' is placed}"/..." on SFSafariViewController, the following code added to AppDelegate.swift will be executed.
 
 ```swift
 // Excerpt from AppDelegate.swift
@@ -72,7 +71,7 @@ Now we need to create a Link with the URL "https://{domain of the server where t
         }
         return true;
     }
-````
+```
 
 Note: The above is for Swift 5, and the following for Swift 4 and earlier.
 ```swift
@@ -84,9 +83,9 @@ Note: The above is for Swift 5, and the following for Swift 4 and earlier.
         }
         return true;
     }
-````
+```
 
-As mentioned above, the above code is only activated when you tap on the URL "https://{domain of the server where 'apple-app-site-association' is located}/...". It will not be activated even if this URL is loaded by JavaScript.  
+As mentioned above, the above code is only activated when you tap on the URL "https://{domain of the server where 'apple-app-site-association' is placed}/...". It will not be activated even if this URL is loaded by JavaScript.  
 
 ## CustomeURLScheme
 CustomURLScheme is a mechanism to define a URL scheme for your mobile app to be called from iOS.
@@ -102,7 +101,7 @@ In URL Schemes, enter a value to call your mobile app. It is recommended to spec
 ![](docimg/xcode_customurlscheme2.png)  
 
 Now we are ready to call the Native code.  
-Now we need to add the URL "{URL Schemes defined above in XCode}://..." to the SFSafariView. on SFSafariViewController, and the following code added to AppDelegate.swift will be executed.
+When you call the URL "{URL Schemes defined above in XCode}://..." on SFSafariViewController, the following code added to AppDelegate.swift will be executed.
 
 ```swift
 // Excerpt from AppDelegate.swift
@@ -110,12 +109,12 @@ Now we need to add the URL "{URL Schemes defined above in XCode}://..." to the S
         print("Custom URL Scheme!")
                 :
     }
-````
+```
 
 In this sample application, this one is launched using JavaScript as shown below.
 
 ```html
-<! -- Excerpt from nodejs/views/static/dispatcher.html (Some parts have been modified to make it easier to read.) --> <!
+<!-- Excerpt from nodejs/views/static/dispatcher.html (Some parts have been modified to make it easier to read.) -->
 <script type="text/javascript" charset="utf-8">
         :
     location.href = "amazonpay-ios-v2://thanks";

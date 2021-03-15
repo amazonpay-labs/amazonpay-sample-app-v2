@@ -199,7 +199,7 @@ function createPayload(url) {
 }
 ```
 
-The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/..." in the specified URL will be the redirect after logging in to Amazon Pay & selecting the address and payment method.  
+The specified URL "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/..." will be the redirect after logging in to Amazon Pay & selecting the address and payment method.  
 This URL is used to launch the native code from Secure WebView with the "Applinks" technology described later.  
 
 These values are passed as parameters to "appLogin.ejs" to generate the HTML, CSS & JavaScript.  
@@ -237,12 +237,12 @@ This file is created using Template Engine called [EJS](https://ejs.co/), and th
 For more information about Applinks, see [here](./README_swv2app.md).
 
 The basic condition for triggering Applinks is "tapping the Link in Chrome/Chrome Custom Tabs, etc.", but it may also be triggered by a Redirect from the Server.  
-If Applinks is not triggered, the files existing at the specified URL will be displayed as usual.  
+If Applinks is not triggered, the file existing at the specified URL will be displayed as usual.  
 
 ### Triggering two-stage Applinks with a rescue page
 In this sample, we have specified a URL where Applinks will be triggered by a redirect after logging in and selecting an address and payment method on the Amazon page, but for the reasons mentioned above, there is a possibility that Applinks will not be triggered here.  
 
-However, for the reasons mentioned above, there is a possibility that Applinks will not be triggered here. As a precaution, this sample is designed to automatically redirect the user to a rescue page with a link to the URL where Applinks will be triggered again if it is not triggered.  
+As a precaution, this sample is designed to automatically redirect the user to a rescue page with a link to the URL where Applinks will be triggered again if it is not triggered.  
 Here's how it works.  
 
 The Android version of the URL that triggers Applinks, which appeared in "Page that automatically transitions to the Amazon login screen" is as follows  
@@ -561,25 +561,23 @@ The relay page is following.
     :
 <script type="text/javascript" charset="utf-8">
     function getURLParameter(name, source) {
-        return decodeURIComponent((new RegExp('[? |&amp;|#]' + name + '=' +
-                        '([^&;]+?)') (&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
+        return decodeURIComponent((new RegExp('[?|&amp;|#]' + name + '=' +
+                        '([^&;]+?)(&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
     }
 
     const client = getURLParameter("client", location.search);
-    location.href = client === 'iOSApp'
+    location.href = client === 'iosApp' 
         ? 'amazonpay-ios-v2://thanks'
         : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end;';
-</script
+</script>
 
 <body></body>
 </html>
 ```
 
-
-
 Here, we use Intent to launch the application from JavaScript.  
 For more information about Intent, please refer to [here](./README_swv2app.md).  
-Unlike Applinks, there is no possibility of accidentally launching a malicious app with Intent, so we do not pass sensitive information such as "amazonCheckoutSessionId" here.  
+Unlike Applinks, there is possibility of accidentally launching a malicious app with Intent, so we do not pass sensitive information such as "amazonCheckoutSessionId" here.  
 
 ## Thanks page
 
@@ -879,7 +877,7 @@ This URL is used to launch the app from Secure WebView with the "Applinks" techn
 These values are passed as parameters to "appLogin.ejs" to generate the HTML, CSS & JavaScript.  
 
 ```html
-<! -- Excerpt from nodejs/views/appLogin.ejs (Some parts have been modified for clarity.) --> :.
+<!-- Excerpt from nodejs/views/appLogin.ejs (Some parts have been modified for clarity.) --> 
 
     :
 <div class="hidden">
@@ -906,34 +904,6 @@ These values are passed as parameters to "appLogin.ejs" to generate the HTML, CS
     setTimeout(() => {
         document.getElementById("AmazonPayButton").click();
     }, 0);
-</script>
-```
-
-:
-<div class="hidden">
-<div id="AmazonPayButton"></div>.
-</div>
-
-<script src="https://static-fe.payments-amazon.com/checkout.js"></script>
-<script type="text/javascript" charset="utf-8">
-amazon.Pay.renderButton('#AmazonPayButton', {
-    merchantId: '<%= merchantId %>',
-    ledgerCurrency: 'JPY', // Amazon Pay account ledger currency
-    sandbox: true, // dev environment
-    checkoutLanguage: 'ja_JP', // render language
-    productType: 'PayAndShip', // checkout type
-    placement: 'Cart', // button placement
-    buttonColor: 'Gold',
-    createCheckoutSessionConfig: {
-        payloadJSON: '<%- JSON.stringify(payload) %>', // string generated in step 2 (* output without HTML Escape)
-        signature: '<%= signature %>', // signature generated in step 3
-        publicKeyId: '<%= publicKeyId %>'
-    }
-});
-
-setTimeout(() => {
-    document.getElementById("AmazonPayButton").click();
-}, 0);
 </script>
 ```
 

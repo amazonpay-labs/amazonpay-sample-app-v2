@@ -205,7 +205,7 @@ This URL is used to launch the native code from Secure WebView with the "Applink
 These values are passed as parameters to "appLogin.ejs" to generate the HTML, CSS & JavaScript.  
 
 ```html
-<! -- Excerpt from nodejs/views/appLogin.ejs (Some parts have been modified for clarity.) --> 
+<!-- Excerpt from nodejs/views/appLogin.ejs (Some parts have been modified for clarity.) --> 
 
     :
 <script src="https://static-fe.payments-amazon.com/checkout.js"></script>
@@ -251,7 +251,7 @@ https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-and
 As mentioned above, if Applinks is not triggered, the file that exists at the specified URL will be displayed.  
 An HTML file with the following contents is placed at the end of this URL.  
 ```html
-<! -- The same thing is placed under nodejs/links. -->
+<!-- The same thing is placed under nodejs/links. -->
 
 <html>
     <script>
@@ -263,8 +263,9 @@ An HTML file with the following contents is placed at the end of this URL.
 This redirects the file to "next.html" with the URL parameter specified when the file was accessed.  
 Note: The above is for a local environment, so the redirect is set to "https://10.0.2.2:3443/static/next.html", but you may need to change this depending on your environment, such as production or testing.  
 The content of "next.html" is as follows.  
+
 ```html
-<! -- excerpt from nodejs/static/next.html -->
+<!-- excerpt from nodejs/static/next.html -->
 
 <body data-gr-c-s-loaded="true">
 <div class="container">
@@ -933,7 +934,7 @@ As mentioned above, if Applinks is not triggered, the file that exists at the sp
 An HTML file with the following contents is placed at the end of this URL.  
 
 ```html
-<! -- The same thing is placed under nodejs/links. -->
+<!-- The same thing is placed under nodejs/links. -->
 
 <html>
 <script>
@@ -946,7 +947,7 @@ This redirects the file to "next.html" with the URL parameter specified when the
 Note: The above is for a local environment, so the redirect is set to "https://10.0.2.2:3443/static/next.html", but you may need to change this depending on your environment, such as production or testing.  
 The content of "next.html" is as follows.  
 ```html
-<! -- excerpt from nodejs/static/next.html -->
+<!-- excerpt from nodejs/static/next.html -->
 
 <body data-gr-c-s-loaded="true">
 <div class="container">

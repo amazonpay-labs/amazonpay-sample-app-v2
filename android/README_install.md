@@ -1,13 +1,13 @@
 # Installation instructions
 
 ## Notes 1
-First, install the [nodejs](. /nodejs/README.md) side first.
+First, install the [nodejs](./nodejs/README.md) side first.
 
 ## Notes 2
 The Android version of this sample application requires the configuration file generated in the following steps to be placed in a location that satisfies the following conditions, so it will not run properly unless you have a server or cloud service account that satisfies the conditions.  
   * The file must be accessible via https (using a valid certificate recognized by the Android OS, not a self-certificate).  
   * The Content-Type of the file must be "application/json".  
-  * The file should be placed under "domain root/.well-known/".  
+  * The file should be placed under "/.well-known/".  
 
 In this sample application, we use [Amazon S3](https://aws.amazon.com/jp/s3/) for this purpose. We recommend this service because it is easy to get an account on the Internet, it is widely used around the world, there is a lot of information on how to use it, and there is a free usage limit of 5GB for 12 months.
 
@@ -16,7 +16,7 @@ If you are not able to prepare it immediately, we recommend you to try the iOS v
 ## Open the project and launch the sample app
 This project can be opened with [Android Studio (free)](https://developer.android.com/studio/). You can also open it with other IDEs, but here we will explain how to open it with the above IDE.  
 First, launch Android Studio.  
-*If you do not see the following screen, please close all the projects that are open in Android Studio. *  
+*If you do not see the following screen, please close all the projects that are open in Android Studio.*  
 ![androidstudio-welcome](docimg/android_welcome.png)
 Import Project" → select the project you cloned → "Open".  
 The project will open and the Gradle build will start, please wait a few minutes until it finishes.  
@@ -29,11 +29,11 @@ This sample will work with API Level 24 or higher, so if there is a Virtual Devi
 If not, click on "Create New Virtual Device" to create a Virtual Device.  
 ![androidstudio-select-hard](docimg/android_select_hard.png)
 Select "Phone" in "Category" on the left and select the device you want to use for development.  
-*If you are not particular about it, you can use the default selection. *  
+*If you are not particular about it, you can use the default selection.*  
 Click "Next".
 ![androidstudio-select-version](docimg/android_select_ver.png)
 Select the version you like from API Level 24 and above, and click "Next".  
-*If you have not downloaded the file yet, click "Download" and follow the instructions on the screen to download the file. *!
+*If you have not downloaded the file yet, click "Download" and follow the instructions on the screen to download the file.*
 ![androidstudio-select-finish](docimg/android_select_fin.png)
 After "Finish", the Virtual Device will start to be generated.  
 After the generation is complete, you will be able to select the generated Virtual Device, so select this one and click "OK".
@@ -43,16 +43,16 @@ The Emulator will start up and the sample application will run. (This will take 
 
 ## Install the self-certificate
 In this sample, a self-certificate is used as the SSL certificate on the server side, so the self-certificate must be installed on the Android side in order for the sample application to work properly.  
-In this section, we will explain how to install the self-certificate on the Virtual Device started by the Emulator. 1.
+In this section, we will explain how to install the self-certificate on the Virtual Device started by the Emulator.
 
-Setting PIN lock  
+1. Setting PIN lock  
 For security reasons, the SSL certificate cannot be installed on Android without setting a PIN.  
 To do this, open the settings screen and select "Screen lock" from the security settings to set the PIN.  
 *How to open the settings screen and the various settings will vary depending on the device and OS version, so if you are not sure, please search on Google or other search engines.  
-For reference, typical ways to open the settings screen include clicking on the app list icon and selecting it, or swiping from the bottom of the home screen to bring up the app list and selecting it. *  
-<img src="docimg/emu_pin.png" width="300"> 2.  
+For reference, typical ways to open the settings screen include clicking on the app list icon and selecting it, or swiping from the bottom of the home screen to bring up the app list and selecting it.*  
+<img src="docimg/emu_pin.png" width="300">  
 
-Download & Install the SSL self-certificate  
+2. Download & Install the SSL self-certificate  
 Launch Chrome and access the following URL  
 https://10.0.2.2:3443/static/crt/sample.crt  
 When you get the warning as below, click "ADVANCED" -> "PROCEED TO 10.0.2.2(UNSAFE)  
@@ -89,11 +89,11 @@ One of the URLs is registered in the "URL Mapping" table, so double-click this o
 Replace the "amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com" part of Host with the domain of the server you prepared, and click "OK".  
 ![androidstudio-welcome](docimg/applinks-update-host.png)
 
-Next, click on (3), "Open Digital Asset Links File Generator" to open the following, and then click on "Generate Digital Asset Links file".  
-Click "Generate Digital Asset Links file". [androidstudio-welcome](docimg/applinks-10.png)
+Next, click on ③, "Open Digital Asset Links File Generator" to open the following, and then click on "Generate Digital Asset Links file".   
+![androidstudio-welcome](docimg/applinks-10.png)
 
 Click on the "Save File" button to save the generated definition file "assetlinks.json" to any folder.  
-Click on the ![androidstudio-welcome](docimg/applinks-11.png)
+![androidstudio-welcome](docimg/applinks-11.png)
 
 ### Deploy and verify the configuration files
 Create a directory named ".well-known" in the Domain root of the server you prepared, and place the definition file "assetlinks.json" there.  
@@ -120,6 +120,6 @@ app.get('/appLogin', async (req, res) => {
         res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query. client}.html?token=${req.query.token}`));
     }
 });
-```.
+```
 
 Now, please restart nodejs and launch the sample application on Emulator to see how it works.

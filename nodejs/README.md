@@ -10,15 +10,17 @@ We have not tested it, though it will probably work with a lower version.
 
 ## Overview
 This web application accepts requests from WebView and Secure WebView, outputs screens, transitions screens, calls Amazon Pay API, and processes payments.  
-For more details, please refer to [android](... /android/README.md), [ios](. /ios/README.md) for more details.
+For more details, please refer to [android](../android/README.md), [ios](../ios/README.md) for more details.
 
 # Install the server side.
 
 ## clone the repository
 If you haven't already, please clone this repository first.  
-````
+
+```
 git clone https://github.com/amazonpay-labs/amazonpay-sample-app-v2.git
 ```
+
 Under the cloned directory, under the "nodejs" directory is the project for this web application.  
 
 ## Create and configure the application in Seller Central
@@ -28,14 +30,14 @@ Under the nodejs/keys/template directory, add
 
 under the nodejs/keys/template directory to a directory directly under the nodejs/keys directory one level up.  
 
-Prepare an application for this sample at [Seller Central](https://sellercentral.amazon.co.jp/) and [here](https://amazonpaycheckoutintegrationguide.s3. amazonaws.com/amazon-pay-checkout/get-set-up-for-integration.html#4-get-your-public-key-id) to obtain the Merchant ID, Public Key ID, Store ID, Store ID, and Private Key, respectively, and copy them to the following
+Prepare an application for this sample at [Seller Central](https://sellercentral-japan.amazon.com/) and [here](https://amazonpaycheckoutintegrationguide.s3.amazonaws.com/amazon-pay-checkout/get-set-up-for-integration.html#5-get-your-public-key-id) to obtain the Merchant ID, Public Key ID, Store ID, Store ID, and Private Key, respectively, and copy them to the following
   * Merchant ID: merchantId from nodejs/keys/keyinfo.js
   * Public Key ID: publicKeyId in nodejs/keys/keyinfo.js
-  Store ID: storeId in nodejs/keys/keyinfo.js * Private Key: storeId in nodejs/keys/keyinfo.js
+  * Store ID: storeId in nodejs/keys/keyinfo.js
   * Private Key: nodejs/keys/privateKey.pem
 
 ## Configure https settings for web server
-[here](. /ssl/README.md) to create a key and certificate for https communication.
+[here](./ssl/README.md) to create a key and certificate for https communication.
 
 ## Install the dependent modules
 In this directory, execute the following command to install the dependent modules.
@@ -45,6 +47,7 @@ npm i
 
 ## Start the server
 Execute the following command in this directory.
+
 ```sh
 node app.js
 ```

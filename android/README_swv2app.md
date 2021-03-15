@@ -1,11 +1,11 @@
 # Techniques to launch apps from Secure WebView
-In this sample application, we use "Applinks" and "Intent" to launch the application from Secure WebView, which have the following merits and demerits respectively.
+In this sample application, we use "Applinks" and "Intent" to launch the application from Secure WebView, which have the following pros and cons respectively.
 - Applinks  
-  - Merit : Secure because you can launch the specified mobile app without fail.
-  - Demerit : Triggered only when the user taps the Link.
+  - Pros : Secure because you can launch the specified mobile app without fail.
+  - Cons : Triggered only when the user taps the Link.
 - Intent
-  - Merit : Can be triggered from JavaScript
-  - Demerit : Due to the way it works, the risk that a malicious app will be launched instead cannot be completely eliminated.
+  - Pros : Can be triggered from JavaScript
+  - Cons : Due to the way it works, the risk that a malicious app will be launched instead cannot be completely eliminated.
 
 In this sample application, we have taken these characteristics into consideration and utilized each of them.  
 Each of them is explained below.
@@ -16,7 +16,7 @@ The mapping between that specific URL and the mobile app is defined in a JSON fi
 The JSON file is placed on a Server managed by the mobile app developer, and this information is loaded via the Internet when the mobile app is installed/updated.  
 As long as the Server is not cracked, the mapping between the URL and the mobile app will be maintained without fail, so there is no need to worry about a malicious app being launched by mistake.  
 
-A tool for generating JSON files for mapping between URLs and apps is available, so I will explain how to generate a new JSON file for mapping using that tool.  
+A tool for generating JSON files for mapping between URLs and apps is available, so we will explain how to generate a new JSON file for mapping using that tool.  
 
 Launch "Tool" -> "App Links Assistant".
 ![androidstudio-welcome](docimg/applinks-1.png)
@@ -28,33 +28,30 @@ Click "+" to add a new mapping.
 ![androidstudio-welcome](docimg/applinks-3.png)
 
 In the "Host" field, select "https://{domain of your own server where you want to place the definition file}", and in the "Activity" field, select the Activity you want to launch with your mapping.  
-In the "Host" field, select "{Server domain you manage to place the definition file}", and in the "Activity" field, select the Activity you want to map and launch. You can manage multiple Activities and URL Mappings in one definition file by specifying "Path", but we will not explain it here.  
-[androidstudio-www [androidstudio-welcome](docimg/applinks-4.png)
+![androidstudio-welcome](docimg/applinks-4.png)
 
-OK" will add the following intent-filter to AndroidManifest.xml.  
+Click "OK" to add the following intent-filter to AndroidManifest.xml.  
 ![androidstudio-welcome](docimg/applinks-5.png)
 
 Manually add the attribute "android:autoVerify="true"" as shown below so that Mapping will be automatically updated by Android when the app is installed or updated.  
 ![androidstudio-welcome](docimg/applinks-6.png)
 
 Next, click "Select Activity" in ②. Click "Insert Code" to add logic to the selected Activity to receive the startup process from Applinks.  
-Click "Insert Code. [androidstudio-welcome](docimg/applinks-8.png)
-![androidstudio-welcome](docimg/applinks-9.png)
+![androidstudio-welcome](docimg/applinks-8.png) ![androidstudio-welcome](docimg/applinks-9.png)
 
-Next, click on (3), "Open Digital Asset Links File Generator" to open the following window, set the appropriate values for your environment and click "Generate Digital Asset Links file".  
-Click "Generate Digital Asset Links file". [androidstudio-welcome](docimg/applinks-10.png)
+Next, click on ③, "Open Digital Asset Links File Generator" to open the following window, set the appropriate values for your environment and click "Generate Digital Asset Links file".  
+![androidstudio-welcome](docimg/applinks-10.png)
 
 Click on the "Save File" button to save the generated definition file "assetlinks.json" to a folder of your choice.  
-Click on the ![androidstudio-welcome](docimg/applinks-11.png)
+![androidstudio-welcome](docimg/applinks-11.png)
 
 Place the definition file "assetlinks.json" in the Server.  
 The points to note at this point are.  
   * Domain should be a different server from the web application.  
   * The file must be accessible via https.  
   * The Content-Type when retrieving the file must be "application/json".  
-  * The file should be placed under the "root of the domain/.well-known/".  
+  * The file should be placed the directory, "/.well-known/", directly under the root of the domain.  
 
-etc.  
 In this sample, we have used AWS S3 to place this "assetlinks.json" file.
 This is relatively easy to do using AWS S3, so please refer to it for reference.  
 
@@ -93,10 +90,9 @@ For reference, here is the Native code for this sample.
                 map.put(kv[0], kv[1]);
             }
                 :
-````
+```
 
-Note that the condition for triggering Applinks is basically "https://{domain of the server where the 'apple-app-site-association' is located}"/... The condition that triggers it is basically when you tap the URL "{'apple-app-site-association' server domain}"/..." on Chrome Custom Tabs, and even if you load this URL with JavaScript, it will not be activated.  
-I experimented and found that unlike iOS Universal Links, when Redirecting (= HTTP 302) is returned, the Location header contains "https://{domain of the server where the 'apple-app-site-association' is located }"/... in the Location header when HTTP 302 is returned).  
+Note that the condition for triggering Applinks is basically when you tap the URL "https://{domain of the server where the 'apple-app-site-association' is located}/..." on Chrome Custom Tabs, and even if you load this URL with JavaScript, it will not be activated.  
 
 ## Intent
 Intent is the basic mechanism of app association in Android, and can be called by defining "intent-filter" in AndroidManifext.xml.
@@ -115,10 +111,10 @@ The following is an excerpt from the AndroidManifext.xml of this sample app.
                 <data
                     android:host="amazon_pay_android_v2"
                     android:scheme="amazon_pay_android_v2" />
-            </intent-filter
+            </intent-filter>
         </activity>
                     :
-````
+```
 
 In this sample application, this one is launched using JavaScript as shown below.
 
@@ -130,6 +126,6 @@ In this sample application, this one is launched using JavaScript as shown below
     location.href = 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end ;';
         :
 </script>
-```.
+```
 
-As you can see from the above configuration method, there is no way to completely prevent a malicious mobile app from registering the exact same intent-filter, and it is not suitable as a means to send sensitive information and other information to the mobile app side.
+As you can see from the above configuration method, there is no way to completely prevent a malicious mobile app from registering the exact same intent-filter, and it is not suitable as a means to send sensitive information to the mobile app side.

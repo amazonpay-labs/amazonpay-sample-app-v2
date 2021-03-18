@@ -28,7 +28,7 @@ nodejs/keys/template ディレクトリ下の、
 
 を一階層上の nodejs/keys ディレクトリ直下にコピーします。  
 
-[Seller Central](https://sellercentral.amazon.co.jp/)にて、本サンプル用にアプリケーションを用意し、[こちら](https://amazonpaycheckoutintegrationguide.s3.amazonaws.com/amazon-pay-checkout/get-set-up-for-integration.html#4-get-your-public-key-id)を参考に、Merchant ID, Public Key ID, Store ID, Private Keyを取得し、それぞれ下記にコピーします。
+[Seller Central](https://sellercentral.amazon.co.jp/)にて、本サンプル用にアプリケーションを用意し、[こちら](https://amazonpaycheckoutintegrationguide.s3.amazonaws.com/amazon-pay-checkout/get-set-up-for-integration.html#5-get-your-public-key-id)を参考に、Merchant ID, Public Key ID, Store ID, Private Keyを取得し、それぞれ下記にコピーします。
   * Merchant ID: nodejs/keys/keyinfo.js の merchantId
   * Public Key ID: nodejs/keys/keyinfo.js の publicKeyId
   * Store ID: nodejs/keys/keyinfo.js の storeId

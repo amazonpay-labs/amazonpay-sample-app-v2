@@ -1158,3 +1158,109 @@ app.get('/sample/thanks', async (req, res) => {
 ```
 
 本サンプルアプリをベースとしたNativeアプリの一連の流れとしては、以上となります。
+
+# 付録
+
+## 固定Signatureでの実装方針
+
+*※ iOS, Android共に同じ内容です。*  
+
+一般的なブラウザの実装では[こちら](https://amazonpaycheckoutintegrationguide.s3.amazonaws.com/amazon-pay-checkout/add-the-amazon-pay-button.html#3-sign-the-payload)を見ると分かる通り、Amazon Payボタンに渡すPayloadのSignatureは、一回だけ計算して後はその値を固定値として使いまわす実装が一般的です。  
+ところが、上記「Server側のAmazon Payボタン出力準備」で解説した下記のコードを見ると分かる通り、本サンプルアプリでは ```apClient.generateButtonSignature(payload)``` にてPayloadのSignatureを毎回計算しています。  
+
+```js
+// nodejs/app.jsより抜粋 (見やすくするため、一部加工しています。)
+
+//-------------------
+// App Login Screen
+//-------------------
+
+app.get('/appLogin', async (req, res) => {
+    res.render('appLogin.ejs', calcConfigs(`https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`));
+});
+
+function calcConfigs(url) {
+    const payload = createPayload(url);
+    const signature = apClient.generateButtonSignature(payload);
+    return {payload: payload, signature: signature, merchantId: keyinfo.merchantId, publicKeyId: keyinfo.publicKeyId};
+}
+
+function createPayload(url) {
+    return {
+        webCheckoutDetails: {
+            checkoutReviewReturnUrl: url
+        },
+        storeId: keyinfo.storeId
+    };
+}
+```
+
+これはアプリのSecurityを向上するために、「checkoutReviewReturnUrl」として指定するURLにアプリ側で生成されたtokenをURLパラメタとして付与する必要があるためで、このtokenの値が毎回変わるものであるためSignatureも毎回計算する必要があります。  
+しかし、利用しているサービスや環境の都合で、Signatureの計算を毎回行うのが難しい場合も考えられます。  
+こういった場合には、画面の遷移数は一画面増えてしまいますが、ここで説明する方針に則ってご実装いただくことでSecurityも担保しつつ、Signatureも使い回すことが可能です。  
+
+### 概要
+
+![](../android/docimg/flow-fixed-signature.png)
+
+上記のように、
+- checkoutReviewReturnUrlには固定のURLを指定
+- アプリから渡されたtokenはSecure WebViewのCookieに保存
+- Amazon側の画面からcheckoutReviewReturnUrlにリダイレクトされた画面でCookieからtokenを取り出し、Applinks/Universal Linksを起動するURLにURLパラメタとして付与する。ユーザがそのLinkをタップすることで、Nativeアプリのコードが起動する。
+
+といった流れになります。  
+本サンプルに沿った、具体的なコード例を下記に示します。  
+
+### checkoutReviewReturnUrlには固定のURLを指定
+```js
+// nodejs/app.jsより
+
+//-------------------
+// App Login Screen
+//-------------------
+
+app.get('/appLogin', async (req, res) => {
+    res.render('appLogin.ejs', {
+        payload: {
+            webCheckoutDetails: {
+                checkoutReviewReturnUrl: `https://localhost:3443/static/next.html` // 固定URL
+            },
+            storeId: keyinfo.storeId
+        },
+        signature: 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', // 事前に計算したSignature
+        merchantId: keyinfo.merchantId,
+        publicKeyId: keyinfo.publicKeyId
+    });
+});
+```
+
+### アプリから渡されたtokenはSecure WebViewのCookieに保存
+```html
+<!-- nodejs/views/appLogin.ejsより -->
+
+<script src="https://static-fe.payments-amazon.com/checkout.js"></script>
+<script type="text/javascript" charset="utf-8">
+    function getURLParameter(name, source) {
+        return decodeURIComponent((new RegExp('[?|&amp;|#]' + name + '=' +
+                        '([^&;]+?)(&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
+    }
+    
+    document.cookie = `token=${getURLParameter('token', location.search)}; path=/;` // Cookieにtokenを保存
+    
+    amazon.Pay.initCheckout({
+            :
+    });
+</script>
+```
+
+### Cookieからtokenを取り出しURLパラメタとして付与
+```html
+<!-- nodejs/static/next.htmlより -->
+
+<script>
+    document.getElementById("nextButton").href = 
+        "https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/index.html" 
+            + location.search + '&'
+            + document.cookie.split('; ').find(function(kv) {return kv.startsWith('token=')}); // Cookieよりtokenを取得
+</script>
+```

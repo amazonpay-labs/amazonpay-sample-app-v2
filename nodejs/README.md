@@ -1,18 +1,19 @@
-# Amazon Pay Mobile Sample App Web Application Side Implementation
-This is the implementation of the web application side of the entire sample application.
+# Amazon Pay Mobile Sample App - Web Application 
+This package contains the web application of the sample application.
 
 ## Operating environment
-nodejs: v12.16.1 or higher  
-We have not tested it, though it will probably work with a lower version.  
+node.js: v12.16.1 or higher  
+
 (Reference) Installation using the installer & package manager:  
   - https://nodejs.org/ja/download/
   - https://nodejs.org/ja/download/package-manager/
 
 ## Overview
-This web application accepts requests from WebView and Secure WebView, outputs screens, transitions screens, calls Amazon Pay API, and processes payments.  
+
+This web application shows the login and transtion screens of the Amazon Pay checkout within (Secure) WebViews and calls the Amazon Pay API to process payments.
 For more details, please refer to [android](../android/README.md), [ios](../ios/README.md) for more details.
 
-# Install the server side.
+# Installation
 
 ## clone the repository
 If you haven't already, please clone this repository first.  
@@ -21,9 +22,10 @@ If you haven't already, please clone this repository first.
 git clone https://github.com/amazonpay-labs/amazonpay-sample-app-v2.git
 ```
 
-Under the cloned directory, under the "nodejs" directory is the project for this web application.  
+Navigate into the "nodejs" subfolder of the cloned directory. This is the project folder of this web application.  
 
-## Create and configure the application in Seller Central
+## Create and configure the application 
+
 Under the nodejs/keys/template directory, add
   - keyinfo.js  
   - privateKey.pem

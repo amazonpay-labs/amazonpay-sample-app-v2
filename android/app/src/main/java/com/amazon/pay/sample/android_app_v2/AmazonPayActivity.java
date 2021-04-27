@@ -43,7 +43,12 @@ public class AmazonPayActivity extends AppCompatActivity {
 
         } else {
             Log.d("[Intent]", "intent received!");
-            MainActivity.webviewUrl = "/sample/thanks";
+            Log.d("[Intent]", intent.getStringExtra("mode"));
+            if(intent.getStringExtra("mode").equals("thanks")) {
+                MainActivity.webviewUrl = "/sample/thanks";
+            } else {
+                MainActivity.webviewUrl = "/sample/cart";
+            }
         }
 
         // 本Activityのfinish. (この後、MainActivity#onResumeに処理が移る)

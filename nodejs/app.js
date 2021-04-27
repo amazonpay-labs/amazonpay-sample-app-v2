@@ -61,7 +61,7 @@ app.get('/appLogin', async (req, res) => {
         newConfig (
             newFullPayload (
                 `https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`,
-                `https://${req.headers.host}/static/cancel.html`
+                `https://${req.headers.host}/static/cancel.html?client=${req.query.client}`
             )
         )
     );

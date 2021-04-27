@@ -18,7 +18,7 @@
     const client = getURLParameter("client", location.search);
     location.href = client === 'iosApp' 
         ? 'amazonpay-ios-v2://thanks'
-        : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;end;';
+        : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;S.mode=thanks;end;';
 </script>
 
 <body></body>

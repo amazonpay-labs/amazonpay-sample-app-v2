@@ -7,19 +7,39 @@
     <meta name="author" content="">
     <meta name="viewport" content="width=device-width,initial-scale=1.0, maximum-scale=1.0">
     <meta name="google" content="notranslate" />
+    <title>Amazon Pay Sample</title>
+    <!-- Bootstrap core CSS -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link href="/static/css/shop-confirmation.css" rel="stylesheet">
 </head>
 
-<script type="text/javascript" charset="utf-8">
-    function getURLParameter(name, source) {
-        return decodeURIComponent((new RegExp('[?|&amp;|#]' + name + '=' +
-                        '([^&;]+?)(&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
-    }
+<body data-gr-c-s-loaded="true">
+    <div id="white_cover" style="width:100%; height:100vh; background-color:#fff; position:relative; z-index:1000; display:block;"></div>
+    <div class="container">
+        <br>
+        <a id="backToApp" href="#" class="btn btn-info btn-lg btn-block">
+            アプリに戻る
+        </a>
+    </div>
+    <script>
+        function getURLParameter(name, source) {
+            return decodeURIComponent((new RegExp('[?|&amp;|#]' + name + '=' +
+                            '([^&;]+?)(&|#|;|$)').exec(source) || [, ""])[1].replace(/\+/g, '%20')) || null;
+        }
 
-    const client = getURLParameter("client", location.search);
-    location.href = client === 'iosApp' 
-        ? 'amazonpay-ios-v2://thanks'
-        : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;S.mode=thanks;end;';
-</script>
+        // 自動的にアプリに戻る
+        const client = getURLParameter("client", location.search);
+        location.href = client === 'iosApp' 
+            ? 'amazonpay-ios-v2://thanks'
+            : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;S.mode=thanks;end;';
 
-<body></body>
+        // アプリがBackgroundになるなどして自動で戻れなかった場合、「アプリに戻る」ボタンを表示
+        document.getElementById("backToApp").href = client === 'iosApp' 
+            ? 'amazonpay-ios-v2://thanks'
+            : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;S.mode=thanks;end;';
+        setTimeout(() => document.getElementById('white_cover').style.display = 'none', 1000);
+    </script>
+</body>
+
 </html>

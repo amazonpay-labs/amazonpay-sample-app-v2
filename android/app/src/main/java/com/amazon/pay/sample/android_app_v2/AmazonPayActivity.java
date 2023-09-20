@@ -15,11 +15,24 @@ import java.util.UUID;
 
 public class AmazonPayActivity extends AppCompatActivity {
 
+    private boolean isKicked = false;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_amazon_pay);
+        this.isKicked = true;
 
         Intent intent = getIntent();
+        Log.d("[Intent]", "intent received!");
+        Log.d("[Intent]", intent.getStringExtra("url"));
+        invokeSecureWebview(this, intent.getStringExtra("url"));
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        this.isKicked = true;
+
         if (intent.getScheme().equals("https")) {
             String appLinkAction = intent.getAction();
             Uri appLinkData = intent.getData();
@@ -55,4 +68,31 @@ public class AmazonPayActivity extends AppCompatActivity {
         this.finish();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        // Secure WebViewを左上の「X」ボタンで閉じられた場合、元の画面に戻すために本Activityを自動でfinishさせる
+        if(!isKicked) {
+            this.finish();
+        }
+        isKicked = false;
+    }
+
+    private void invokeSecureWebview(Context context, String url) {
+        CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder().build();
+
+        // 起動するBrowserにChromeを指定
+        // Note: Amazon Payでは他のブラウザがサポート対象に入っていないため、ここではChromeを指定している.
+        // [参考] https://pay.amazon.com/jp/help/202030010
+        // もしその他のChrome Custom Tabs対応のブラウザを起動する必要がある場合には、下記リンク先ソースなどを参考に実装する.
+        // [参考] https://github.com/GoogleChrome/custom-tabs-client/blob/master/shared/src/main/java/org/chromium/customtabsclient/shared/CustomTabsHelper.java#L64
+        tabsIntent.intent.setPackage("com.android.chrome");
+
+        // 別のActivityへの遷移時に、自動的にChrome Custom Tabsを終了させるためのフラグ設定.
+        tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        // Chrome Custom Tabsの起動
+        tabsIntent.launchUrl(context, Uri.parse(url));
+    }
 }

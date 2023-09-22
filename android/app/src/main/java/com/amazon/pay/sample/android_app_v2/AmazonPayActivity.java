@@ -89,9 +89,6 @@ public class AmazonPayActivity extends AppCompatActivity {
         // [参考] https://github.com/GoogleChrome/custom-tabs-client/blob/master/shared/src/main/java/org/chromium/customtabsclient/shared/CustomTabsHelper.java#L64
         tabsIntent.intent.setPackage("com.android.chrome");
 
-        // 別のActivityへの遷移時に、自動的にChrome Custom Tabsを終了させるためのフラグ設定.
-        tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
         // Chrome Custom Tabsの起動
         tabsIntent.launchUrl(context, Uri.parse(url));
     }

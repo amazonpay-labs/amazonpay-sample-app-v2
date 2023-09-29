@@ -4,7 +4,7 @@ Android版のサンプルアプリの、2023/09/29よりも前のバージョン
 
 <img src="docimg/previous1.gif" width="300"><img src="docimg/previous2.gif" width="300">  
 
-購入フローの途中でアプリを切り替えること自体がレアケースであるため、今までこの制限は問題になっておりませんでした。  
+Buyerからすると購入フローの途中でアプリを切り替える必要はなく、実際にこの状況が発生すること自体レアケースだったため、今までこの制限は問題になっておりませんでした。  
 ところが、現在Amazon PayではSMSやEメールを用いた2段階認証の導入が一部で始まっております。この2段階認証がAndroidアプリで発動した場合、ほとんどのケースでBuyerは同一端末上のSMSアプリやEメールアプリを起動して認証を行うことになり、結果的に購入フローの途中でアプリ切替が発生してAmazon Payの処理実行中のSecure WebViewが閉じられてしまい、購入フローが失敗する結果に繋がってしまいます。  
 
 この問題を回避するため、2023/09/29以降の現バージョンのAndroid版サンプルアプリでは、アプリを切替えてもSecure WebView(Chrome Custom Tabs)がCloseしないよう、改善が加えられております。  
@@ -12,7 +12,7 @@ Android版のサンプルアプリの、2023/09/29よりも前のバージョン
 
 <img src="docimg/current.gif" width="300">  
 
-修正量自体は、Androidアプリ側が40〜50行程度、Web側が静的htmlファイル一つのみで20行弱程度と、軽微です。
+修正量自体は、Androidアプリ側が30〜40行程度、Web側が静的htmlファイル一つのみで20行弱程度と、軽微です。
 ここでは以前のバージョンをご参考にAndroidアプリをご実装された方が内容を理解して簡単に改修を行えるよう、前バージョンと現バージョンの違いの概要を述べ、具体的な修正内容について説明いたします。  
 
 ## 前バージョンのSecure WebView起動・Closeの処理概要
@@ -45,7 +45,7 @@ Amazon Pay側からアプリに戻る時、AmazonPayActivityが起動されま�
 
 ## 現バージョンのSecure WebView起動・Closeの処理概要
 
-現バージョンでは、「launchModeでsingleTaskを指定されたActivityが起動されると、スタックの上に積まれたActivityがあればそれを廃棄してからStartする」という挙動を利用して、Secure WebView(Chrome Custom Tabs)をCloseしています。  
+現バージョンでは、「launchModeがsingleTaskのActivityを起動すると、スタックの上に積まれたActivityが廃棄される」という挙動を利用して、Secure WebView(Chrome Custom Tabs)をCloseしています。  
 具体的には、Amazon Payの購入フローを起動するとき、  
 
 ![](docimg/2023-09-28-14-56-11.png)  
@@ -54,7 +54,7 @@ Amazon Pay側からアプリに戻る時、AmazonPayActivityが起動されま�
 
 ![](docimg/2023-09-28-15-02-44.png)  
 
-AmazonPayActivityは起動されると、自動的にSecure WebViewを起動します。この時、スタック上でAmazonPayActivityの上にSecure WebViewが積まれるよう、オプションを指定します。  
+AmazonPayActivityは起動されると、自動的にSecure WebViewを起動します。この時、別Taskではなくスタック上でAmazonPayActivityの上にSecure WebViewが積まれるよう、オプションを指定します。  
 
 ![](docimg/2023-09-28-15-01-43.png)  
 
@@ -62,7 +62,7 @@ Amazon Pay側からアプリに戻る時、AmazonPayActivityが起動されま�
 
 ![](docimg/2023-09-28-15-06-22.png)  
 
-AmazonPayActivityは「singleTask」なので、起動時にスタックの上に積まれているSecure WebViewを廃棄してからStartします。  
+AmazonPayActivityは「singleTask」なので、起動前にスタックの上に積まれているSecure WebViewが廃棄されます。  
 
 ![](docimg/2023-09-28-15-05-53.png)  
 

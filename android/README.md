@@ -350,7 +350,7 @@ Applinksにより起動されるNaiveコードは、下記になります。
         this.finish();
     }
 ```
-※ 本サンプルではAmazonPayActivityが「singleTask」に設定されており、それによりSecure WebView(Chrome Custom Tabs)はAmazonPayActivityの起動により自動的にCloseされます。よって、上記onNewIntent呼び出し時点で既にCloseされています。  
+※ 本サンプルではAmazonPayActivityが「singleTask」に設定されており、それによりSecure WebView(Chrome Custom Tabs)はAmazonPayActivityの起動により自動的にCloseされます。  
 
 最初に、Applinks発動のURLに指定されていたURLパラメタを取得します。  
 
@@ -1050,7 +1050,7 @@ Applinksにより起動される処理は、下記になります。
         this.finish();
     }
 ```
-※ 本サンプルではAmazonPayActivityが「singleTask」に設定されており、それによりSecure WebView(Chrome Custom Tabs)はAmazonPayActivityの起動により自動的にCloseされます。よって、上記onNewIntent呼び出し時点で既にCloseされています。  
+※ 本サンプルではAmazonPayActivityが「singleTask」に設定されており、それによりSecure WebView(Chrome Custom Tabs)はAmazonPayActivityの起動により自動的にCloseされます。  
 
 最初に、Applinks発動のURLに指定されていたURLパラメタを取得します。  
 
@@ -1220,17 +1220,16 @@ Applinksとは違い、Intentでは間違って悪意のあるアプリが起動
 上記Intentにより起動されるNativeの処理は、下記になります。
 
 ```java
-// MainActivity.javaより抜粋
+// AmazonPayActivity.java より抜粋
 
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onNewIntent(Intent intent) {
             :
-        Intent intent = getIntent();
         if (intent.getScheme().equals("https")) {
             :
             :
         } else {
             Log.d("[Intent]", "intent received!");
-            // Thanksページを構築して表示
+            // Thanksページを構築して表示 (※ MainActivityに戻った後に処理するのがお勧め)
         }
 
         // 本Activityのfinish. (この後、MainActivity#onResumeに処理が移る)

@@ -34,7 +34,7 @@
             ? 'amazonpay-ios-v2://thanks'
             : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;S.mode=thanks;end;';
 
-        // アプリがBackgroundになるなどして自動で戻れなかった場合、「アプリに戻る」ボタンを表示
+        // アプリがBackgroundになるなどして自動で戻れなかった場合に備え、「アプリに戻る」ボタンを表示
         document.getElementById("backToApp").href = client === 'iosApp' 
             ? 'amazonpay-ios-v2://thanks'
             : 'intent://amazon_pay_android_v2#Intent;package=com.amazon.pay.sample.android_app_v2;scheme=amazon_pay_android_v2;S.mode=thanks;end;';

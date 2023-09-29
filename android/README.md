@@ -20,6 +20,17 @@ Android 7以降: Google Chrome 64以降
 
 # Amazon Payの実装方法 - WebViewアプリ編
 
+## AndroidManifest.xmlの設定
+
+Secure WebView(Chrome Custom Tabs)のOpenとClose処理を担当する、AmazonPayActivityでは、下記のようにlaunchModeに「singleTask」を指定します。  
+
+```xml
+        <activity android:name=".AmazonPayActivity"
+            android:launchMode="singleTask">
+```
+
+理由や詳細については、[こちら](./README_fixSwitchApp.md)をご参照下さい。  
+
 ## カートページ
 
 <img src="docimg/cart.png" width="500">  
@@ -40,13 +51,13 @@ Android 7以降: Google Chrome 64以降
     @JavascriptInterface
     public void login() {
         Log.d("[JsCallback]", "login");
-        invokeAppLoginPage(getApplicationContext());
+        invokeAppLoginPage(this);
     }
 
     @JavascriptInterface
     public void auth(String url) {
         Log.d("[JsCallback]", "auth");
-        invokeAuthorizePage(getApplicationContext(), url);
+        invokeAuthorizePage(this, url);
     }
 
 }
@@ -121,11 +132,13 @@ Androidの場合は、「Amazon Payボタン」画像のnodeを生成して同�
     @JavascriptInterface
     public void login() {
         Log.d("[JsCallback]", "login");
-        invokeAppLoginPage(getApplicationContext());
+        invokeAppLoginPage(this);
     }
 ```
 
-「invokeAppLoginPage()」の処理が、下記になります。  
+「invokeAppLoginPage()」の処理が、下記になります。これにより、AmazonPayActivityが起動されます。  
+※ なお、UUID(version 4)を生成して「token」という名前で、Native側のFieldとURLのパラメタとして設定していますが、こちらの理由については後述します。  
+
 ```java
 // MainActivity.javaから抜粋 (見やすくするため、一部加工しています。)
 
@@ -138,6 +151,30 @@ Androidの場合は、「Amazon Payボタン」画像のnodeを生成して同�
     }
         :
     private void invokeSecureWebview(Context context, String url) {
+        Intent intent = new Intent(context, AmazonPayActivity.class);
+        intent.putExtra("url", url);
+        context.startActivity(intent);
+    }
+```
+
+起動されたAmazonPayActivity側の処理が下記です。  
+URLを指定して、Chrome Custom Tabs(Android側のSecure WebView)を起動しているのが分かると思います。  
+
+```java
+public class AmazonPayActivity extends AppCompatActivity {
+        :
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_amazon_pay);
+        this.isKicked = true;
+
+        Intent intent = getIntent();
+        Log.d("[Intent]", "intent received!");
+        Log.d("[Intent]", intent.getStringExtra("url"));
+        invokeSecureWebview(this, intent.getStringExtra("url"));
+    }
+        :
+    private void invokeSecureWebview(Context context, String url) {
         CustomTabsIntent tabsIntent = new CustomTabsIntent.Builder().build();
 
         // 起動するBrowserにChromeを指定
@@ -147,20 +184,11 @@ Androidの場合は、「Amazon Payボタン」画像のnodeを生成して同�
         // [参考] https://github.com/GoogleChrome/custom-tabs-client/blob/master/shared/src/main/java/org/chromium/customtabsclient/shared/CustomTabsHelper.java#L64
         tabsIntent.intent.setPackage("com.android.chrome");
 
-        // 別のActivityへの遷移時に、自動的にChrome Custom Tabsを終了させるためのフラグ設定.
-        tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-        // Chrome Custom Tabs終了時に、Historyとして残らないようにするためのフラグ設定.
-        tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-
         // Chrome Custom Tabsの起動
         tabsIntent.launchUrl(context, Uri.parse(url));
     }
+}
 ```
-
-URLを指定して、Chrome Custom Tabs(Android側のSecure WebView)を起動しているのが分かると思います。  
-なお、UUID(version 4)を生成して「token」という名前で、Native側のFieldとURLのパラメタとして設定していますが、こちらの理由については後述します。  
 
 ## 自動的にAmazonログイン画面に遷移させるページ
 
@@ -295,9 +323,8 @@ Applinksにより起動されるNaiveコードは、下記になります。
 ```java
 // AmazonPayActivityより抜粋　(見やすくするため、一部加工しています。)
 
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onNewIntent(Intent intent) {
                 :
-        Intent intent = getIntent();
         if (intent.getScheme().equals("https")) {
             String appLinkAction = intent.getAction();
             Uri appLinkData = intent.getData();
@@ -323,7 +350,7 @@ Applinksにより起動されるNaiveコードは、下記になります。
         this.finish();
     }
 ```
-本サンプルでは、Secure WebView(Chrome Custom Tabs)は他のActivityが起動したら自動的にCloseされるよう設定されているため、このActivityが起動した時点で既にCloseされています。
+※ 本サンプルではAmazonPayActivityが「singleTask」に設定されており、それによりSecure WebView(Chrome Custom Tabs)はAmazonPayActivityの起動により自動的にCloseされます。よって、上記onNewIntent呼び出し時点で既にCloseされています。  
 
 最初に、Applinks発動のURLに指定されていたURLパラメタを取得します。  
 
@@ -525,7 +552,7 @@ WebViewに渡されたCallback Objectの存在チェックにより、クライ�
     @JavascriptInterface
     public void auth(String url) {
         Log.d("[JsCallback]", "auth");
-        invokeAuthorizePage(getApplicationContext(), url);
+        invokeAuthorizePage(this, url);
     }
 ```
 
@@ -539,6 +566,7 @@ WebViewに渡されたCallback Objectの存在チェックにより、クライ�
     }
 ```
 
+このあとの流れは『「Amazon Payボタン」画像クリック時の、Secure WebViewの起動処理』と同じで、AmazonPayActivity経由でSecure WebViewが起動されます。  
 以上により、Amazon Pay APIのcheckoutSession更新処理の戻り値に含まれていたURLを、Secure WebViewで開くことができます。  
 
 ## 支払い処理ページ
@@ -551,6 +579,7 @@ WebViewに渡されたCallback Objectの存在チェックにより、クライ�
 
 ### 中継用ページ
 中継用ページは下記のようになっています。  
+※ 正確には、Androidでアプリ切替があった場合に備えた処理も併せて実装されています。詳細は[こちら](./README_fixSwitchApp.md)をご確認ください。  
 
 ```html
 <!-- nodejs/static/dispatcher.html より抜粋 -->
@@ -586,11 +615,8 @@ Applinksとは違い、Intentでは間違って悪意のあるアプリが起動
 ```java
 // AmazonPayActivity.java より抜粋
 
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_amazon_pay);
-
-        Intent intent = getIntent();
+    protected void onNewIntent(Intent intent) {
+                :
         if (intent.getScheme().equals("https")) {
                 :
                 :
@@ -782,26 +808,65 @@ AndroidのWebViewは制限がかなり多く、デフォルトの状態では本
 
 # Amazon Payの実装方法 - Nativeアプリ編
 
+## AndroidManifest.xmlの設定
+
+Secure WebView(Chrome Custom Tabs)のOpenとClose処理を担当する、AmazonPayActivityでは、下記のようにlaunchModeに「singleTask」を指定します。  
+
+```xml
+        <activity android:name=".AmazonPayActivity"
+            android:launchMode="singleTask">
+```
+
+理由や詳細については、[こちら](./README_fixSwitchApp.md)をご参照下さい。  
+
 ## カートページ or 商品ページ
 <img src="docimg/cart.png" width="500">  
 
 ### 「Amazon Payボタン」画像の配置
 
 Amamzon Payで支払いができることをユーザに視覚的に伝えるのには、Amazon Payボタンを画面に表示するのが効果的です。  
-Nativeアプリでは本物のAmazon Payボタンを配置できないので、画像を代わりに配置します。
+Nativeアプリでは本物のAmazon Payボタンを配置できないので、画像を代わりに配置します。  
 
 この時指定する「Amazon Payボタン」画像は「./nodejs/static/img/button_images」の下にあるものから選ぶようにして下さい。なお、本番環境向けにファイル名が「Sandbox_」で始まるものを指定しないよう、ご注意下さい。  
 
 ### 「Amazon Payボタン」画像クリック時の、Secure WebViewの起動処理
-上記、「Amazon Payボタン」画像がクリックされたときには、下記のようなコードを呼びます。  
+
+上記、「Amazon Payボタン」画像がクリックされたときには、下記のようなコードを呼びます。これにより、AmazonPayActivityが起動されます。  
+※ なお、UUID(version 4)を生成して「token」という名前で、Native側のFieldとURLのパラメタとして設定していますが、こちらの理由については後述します。  
+
 ```java
 // MainActivity.javaから抜粋 (見やすくするため、一部加工しています。)
 
+        :
     static volatile String token = null;
         :
     void invokeAppLoginPage(Context context) {
         token = UUID.randomUUID().toString();
         invokeSecureWebview(context, "https://10.0.2.2:3443/appLogin?client=androidApp&token=" + token);
+    }
+        :
+    private void invokeSecureWebview(Context context, String url) {
+        Intent intent = new Intent(context, AmazonPayActivity.class);
+        intent.putExtra("url", url);
+        context.startActivity(intent);
+    }
+```
+
+起動されたAmazonPayActivity側の処理が下記です。  
+URLを指定して、Chrome Custom Tabs(Android側のSecure WebView)を起動しているのが分かると思います。  
+
+```java
+public class AmazonPayActivity extends AppCompatActivity {
+        :
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_amazon_pay);
+        this.isKicked = true;
+
+        Intent intent = getIntent();
+        Log.d("[Intent]", "intent received!");
+        Log.d("[Intent]", intent.getStringExtra("url"));
+        invokeSecureWebview(this, intent.getStringExtra("url"));
     }
         :
     private void invokeSecureWebview(Context context, String url) {
@@ -814,20 +879,11 @@ Nativeアプリでは本物のAmazon Payボタンを配置できないので、�
         // [参考] https://github.com/GoogleChrome/custom-tabs-client/blob/master/shared/src/main/java/org/chromium/customtabsclient/shared/CustomTabsHelper.java#L64
         tabsIntent.intent.setPackage("com.android.chrome");
 
-        // 別のActivityへの遷移時に、自動的にChrome Custom Tabsを終了させるためのフラグ設定.
-        tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-
-        // Chrome Custom Tabs終了時に、Historyとして残らないようにするためのフラグ設定.
-        tabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-
         // Chrome Custom Tabsの起動
         tabsIntent.launchUrl(context, Uri.parse(url));
     }
+}
 ```
-
-URLを指定して、Chrome Custom Tabs(Android側のSecure WebView)を起動しているのが分かると思います。  
-なお、UUID(version 4)を生成して「token」という名前で、Native側のFieldとURLのパラメタとして設定していますが、こちらの理由については後述します。  
 
 ## 自動的にAmazonログイン画面に遷移させるページ
 
@@ -962,9 +1018,8 @@ Applinksにより起動される処理は、下記になります。
 ```java
 // AmazonPayActivity.javaより抜粋　(見やすくするため、一部加工しています。)
 
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onNewIntent(Intent intent) {
             :
-        Intent intent = getIntent();
         if (intent.getScheme().equals("https")) {
             String appLinkAction = intent.getAction();
             Uri appLinkData = intent.getData();
@@ -992,7 +1047,7 @@ Applinksにより起動される処理は、下記になります。
         this.finish();
     }
 ```
-本サンプルでは、Secure WebView(Chrome Custom Tabs)は他のActivityが起動したら自動的にCloseされるよう設定されているため、このActivityが起動した時点で既にCloseされています。
+※ 本サンプルではAmazonPayActivityが「singleTask」に設定されており、それによりSecure WebView(Chrome Custom Tabs)はAmazonPayActivityの起動により自動的にCloseされます。よって、上記onNewIntent呼び出し時点で既にCloseされています。  
 
 最初に、Applinks発動のURLに指定されていたURLパラメタを取得します。  
 
@@ -1115,6 +1170,7 @@ Nativeアプリ側でこのResponseを受け取ったら、上記のURLをパラ
     }
 ```
 
+このあとの流れは『「Amazon Payボタン」画像クリック時の、Secure WebViewの起動処理』と同じで、AmazonPayActivity経由でSecure WebViewが起動されます。  
 以上により、Amazon Pay APIのcheckoutSession更新処理の戻り値に含まれていたURLを、Secure WebViewで開くことができます。  
 
 ## 支払い処理ページ
@@ -1127,6 +1183,7 @@ Nativeアプリ側でこのResponseを受け取ったら、上記のURLをパラ
 
 ### 中継用ページ
 中継用ページは下記のようになっています。  
+※ 正確には、Androidでアプリ切替があった場合に備えた処理も併せて実装されています。詳細は[こちら](./README_fixSwitchApp.md)をご確認ください。  
 
 ```html
 <!-- nodejs/static/dispatcher.html より抜粋 -->

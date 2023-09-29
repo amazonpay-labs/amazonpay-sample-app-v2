@@ -248,7 +248,7 @@ Secure WebView上の支払い処理ページからアプリに戻る処理を担
 
 ![](docimg/2023-09-28-17-26-45.png)  
 
-AmazonPayActivityには画面を操作するような処理は実装されていないため、下記の動画のように真っ白な画面が表示されてBuyerがアプリを操作できなくなってしまいます。  
+AmazonPayActivityには画面に何かを表示したり、操作するような処理は実装されておらず、下記の動画のように真っ白な画面が表示されてBuyerがアプリを操作できなくなってしまいます。  
 
 <img src="docimg/close_white.gif" width="300">  
 

@@ -1,5 +1,5 @@
 > [!NOTE]
-> 2023/9/29以降のバージョンにて、Android側にアプリ切替時の挙動の改善が加えられております。詳細は[こちら](./android/README_fixSwitchApp.md)です。
+> 2023/9/29以降のバージョンにて、Android側にアプリ切替時の挙動の改善が加えられております。詳細は[こちら](android/README_fixSwitchApp.md)です。
 
 # 本サンプルアプリについて
 SmartPhone上でAmazon Payを使って商品を購入する、モバイルアプリのサンプル実装です。  

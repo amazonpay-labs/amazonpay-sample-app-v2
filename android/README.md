@@ -579,7 +579,7 @@ WebViewに渡されたCallback Objectの存在チェックにより、クライ�
 
 ### 中継用ページ
 中継用ページは下記のようになっています。  
-※ 正確には、Androidでアプリ切替があった場合に備えた処理も併せて実装されています。詳細は[こちら](./README_fixSwitchApp.md)をご確認ください。  
+※ 正確には、Androidでアプリ切替があった場合に備えた処理も併せて実装されています。詳細は[こちら](./README_fixSwitchApp.md#3-中継用ページのamazonpayactivityの自動起動が発動しなかった場合の対処)をご確認ください。  
 
 ```html
 <!-- nodejs/static/dispatcher.html より抜粋 -->
@@ -1183,7 +1183,7 @@ Nativeアプリ側でこのResponseを受け取ったら、上記のURLをパラ
 
 ### 中継用ページ
 中継用ページは下記のようになっています。  
-※ 正確には、Androidでアプリ切替があった場合に備えた処理も併せて実装されています。詳細は[こちら](./README_fixSwitchApp.md)をご確認ください。  
+※ 正確には、Androidでアプリ切替があった場合に備えた処理も併せて実装されています。詳細は[こちら](./README_fixSwitchApp.md#3-中継用ページのamazonpayactivityの自動起動が発動しなかった場合の対処)をご確認ください。  
 
 ```html
 <!-- nodejs/static/dispatcher.html より抜粋 -->

@@ -1,5 +1,6 @@
 > [!NOTE]
-> 2023/9/29以降のバージョンにて、Android側にアプリ切替時の挙動の改善が加えられております。詳細はandroidディレクトリ直下の「README_fixSwitchApp.md」をご参照下さい。
+> 2023/9/29以降のバージョンにて、Android側にアプリ切替時の挙動の改善が加えられております。詳細はandroidディレクトリ直下の「README_fixSwitchApp.md」をご参照下さい。  
+> なお、2023/9/29以前のAndroidアプリを参照する必要がある場合には、[こちら](https://github.com/amazonpay-labs/amazonpay-sample-app-v2/tree/072ea142a6752e3d4c410fdeca242e71ad549b47)をご参照下さい。  
 
 # 本サンプルアプリについて
 SmartPhone上でAmazon Payを使って商品を購入する、モバイルアプリのサンプル実装です。  

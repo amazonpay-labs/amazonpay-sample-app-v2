@@ -685,6 +685,9 @@ Amazon Pay APIを使ってcheckoutSessionを完了し、thanks画面を表示し
 
 ## その他
 
+### Secure WebView上で「X」ボタンで閉じられたときの対処
+[こちら](./README_fixSwitchApp.md#4-secure-webview%E3%81%8C%E5%B7%A6%E4%B8%8A%E3%81%AEx%E3%83%9C%E3%82%BF%E3%83%B3%E3%81%AB%E3%82%88%E3%82%8Aclose%E3%81%95%E3%82%8C%E3%81%9F%E5%A0%B4%E5%90%88%E3%81%AE%E5%AF%BE%E5%87%A6)を参照。
+
 ### Secure WebView起動時の対処
 WebViewからSecure WebView起動処理をJavaScriptで呼び出すとき、下記のように直前で「coverScreen」という、画面を真っ白にする関数を呼んでいます。  
 
@@ -1257,6 +1260,12 @@ app.get('/sample/thanks', async (req, res) => {
 ```
 
 本サンプルアプリをベースとしたNativeアプリの一連の流れとしては、以上となります。
+
+## その他
+
+### Secure WebView上で「X」ボタンで閉じられたときの対処
+[こちら](./README_fixSwitchApp.md#4-secure-webview%E3%81%8C%E5%B7%A6%E4%B8%8A%E3%81%AEx%E3%83%9C%E3%82%BF%E3%83%B3%E3%81%AB%E3%82%88%E3%82%8Aclose%E3%81%95%E3%82%8C%E3%81%9F%E5%A0%B4%E5%90%88%E3%81%AE%E5%AF%BE%E5%87%A6)を参照。
+
 
 # 付録
 

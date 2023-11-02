@@ -17,7 +17,8 @@
     amazon.Pay.initCheckout({
         merchantId: '<%= merchantId %>',
         ledgerCurrency: 'JPY', // Amazon Pay account ledger currency
-        sandbox: true, // dev environment
+        // sandbox: true, // dev environment
+        sandbox: false, // live environment
         checkoutLanguage: 'ja_JP', // render language
         productType: 'PayAndShip', // checkout type
         placement: 'Other', // button placement

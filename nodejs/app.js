@@ -31,7 +31,8 @@ const apClient = new Client.WebStoreClient({
     publicKeyId: keyinfo.publicKeyId,
     privateKey: fs.readFileSync('keys/privateKey.pem'),
     region: 'jp',
-    sandbox: true
+    // sandbox: true
+    sandbox: false
 });
 
 // Other
@@ -47,7 +48,8 @@ app.get('/sample/cart', async (req, res) => {
     res.render (
         'sample/cart.ejs', 
         newConfig (
-            newPayload ("https://localhost:3443/sample/checkoutReview")
+            // newPayload ("https://localhost:3443/sample/checkoutReview")
+            newPayload ("https://127.0.0.1/sample/checkoutReview")
         )
     );
 });
@@ -106,7 +108,8 @@ app.get('/sample/checkoutReview', async (req, res) => {
     order.items.push({id: 'item0010', name: 'Fire HD10', price: 15980, num: parseInt(order.hd10)});
     order.items.forEach(item => item.summary = item.price * item.num); // 小計
     order.price = order.items.map(item => item.summary).reduce((pre, cur) => pre + cur); // 合計金額
-    order.chargeAmount = Math.floor(order.price * 1.1); // 税込金額
+    // order.chargeAmount = Math.floor(order.price * 1.1); // 税込金額
+    order.chargeAmount = 1; // 本番テストでは常に1円
 
     // Amazon Pay受注情報
     const payload = await apClient.getCheckoutSession(req.query.amazonCheckoutSessionId, 
@@ -146,8 +149,10 @@ app.post('/sample/checkoutSession', async (req, res) => {
 });
 
 async function updateCheckoutSession(data) {
-    const url = data.client === 'browser' ? "https://localhost:3443/sample/thanks" :
-        `https://${data.host}/static/dispatcher.html?client=${data.client}`;
+    // const url = data.client === 'browser' ? "https://localhost:3443/sample/thanks" :
+    //     `https://${data.host}/static/dispatcher.html?client=${data.client}`;
+    const url = data.client === 'browser' ? "https://127.0.0.1/sample/thanks" :
+        `https://${data.client === 'androidApp' ?  data.host : "127.0.0.1"}/static/dispatcher.html?client=${data.client}`;
     return await apClient.updateCheckoutSession(data.amazonCheckoutSessionId, {
         webCheckoutDetails: {
             checkoutResultReturnUrl: url
@@ -176,18 +181,20 @@ async function updateCheckoutSession(data) {
 //-------------------
 app.get('/sample/thanks', async (req, res) => {
     const order = JSON.parse(req.cookies.session);
-    await apClient.completeCheckoutSession(order.amazonCheckoutSessionId, {
-        chargeAmount: {
-            amount: '' + order.chargeAmount,
-            currencyCode: "JPY"
-        }
-    });
+    // 本番テストではcompleteCheckoutSessionは呼ばない
+    // await apClient.completeCheckoutSession(order.amazonCheckoutSessionId, {
+    //     chargeAmount: {
+    //         amount: '' + order.chargeAmount,
+    //         currencyCode: "JPY"
+    //     }
+    // });
     res.render('sample/thanks.ejs', order);
 });
 
 //---------------------
 // Start App server
 //---------------------
-const APP_PORT = process.env.APP_PORT || 3443;
+// const APP_PORT = process.env.APP_PORT || 3443;
+const APP_PORT = process.env.APP_PORT || 443;
 appServer.listen(APP_PORT);
 console.log(`App listening on port ${APP_PORT}`);

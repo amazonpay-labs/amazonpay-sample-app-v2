@@ -103,7 +103,8 @@
         amazon.Pay.renderButton('#AmazonPayButton', {
             merchantId: '<%= merchantId %>',
             ledgerCurrency: 'JPY', // Amazon Pay account ledger currency
-            sandbox: true, // dev environment
+            // sandbox: true, // dev environment
+            sandbox: false, // live environment
             checkoutLanguage: 'ja_JP', // render language
             productType: 'PayAndShip', // checkout type
             placement: 'Cart', // button placement
@@ -117,7 +118,8 @@
     } else {
         let node = document.createElement("input");
         node.type = "image";
-        node.src = "/static/img/button_images/Gold/Sandbox-ja_jp-amazonpay-gold-large-button_T2.png";
+        // node.src = "/static/img/button_images/Gold/Sandbox-ja_jp-amazonpay-gold-large-button_T2.png";
+        node.src = "/static/img/button_images/Gold/live-ja_jp-amazonpay-gold-large-button_T2.png";
         node.addEventListener('click', (e) => {
             coverScreen();
             if(client === 'androidApp') {

@@ -60,7 +60,8 @@ public class MainActivity extends AppCompatActivity {
 
         webView.addJavascriptInterface(this, "androidApp");
 
-        webView.loadUrl("https://10.0.2.2:3443/sample/cart");
+//        webView.loadUrl("https://10.0.2.2:3443/sample/cart");
+        webView.loadUrl("https://10.0.2.2/sample/cart");
     }
 
     @Override
@@ -78,7 +79,8 @@ public class MainActivity extends AppCompatActivity {
 
     void invokeAppLoginPage(Context context) {
         token = UUID.randomUUID().toString();
-        invokeSecureWebview(context, "https://10.0.2.2:3443/appLogin?client=androidApp&token=" + token);
+//        invokeSecureWebview(context, "https://10.0.2.2:3443/appLogin?client=androidApp&token=" + token);
+        invokeSecureWebview(context, "https://10.0.2.2/appLogin?client=androidApp&token=" + token);
     }
 
     void invokeAuthorizePage(Context context, String url) {

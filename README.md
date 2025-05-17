@@ -16,7 +16,7 @@ SmartPhone上でAmazon Payを使って商品を購入する、モバイルアプ
 
 その他の部分は、通常のAmazon Payの実装と同じです。  
 よって、下記Amazon Pay開発者用ページを参考にご実装いただけますし、また通常のPC/Mobileのブラウザ向けのページとソースコードの多くを共有することができます。  
-https://amazon-pay-v2.s3-ap-northeast-1.amazonaws.com/V2_Documents.html  
+https://developer.amazon.com/ja/docs/amazon-pay/intro.html  
 
 本サンプルアプリも、通常のPC/Mobileのブラウザ向けの一般的なAmazon Payの実装と、モバイルアプリ(Android/iOS)向けの実装が同じコード上で実現されています。
 

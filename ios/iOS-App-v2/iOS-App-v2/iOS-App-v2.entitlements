@@ -4,8 +4,8 @@
 <dict>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
-		<string>applinks:amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com?mode=developer</string>
-		<string>webcredentials:amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com?mode=developer</string>
+		<string>applinks:dzpmbh5sopa6k.cloudfront.net?mode=developer</string>
+		<string>webcredentials:dzpmbh5sopa6k.cloudfront.net?mode=developer</string>
 	</array>
 </dict>
 </plist>

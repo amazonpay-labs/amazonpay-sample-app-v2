@@ -86,14 +86,14 @@
     } else if(window.webkit && webkit.messageHandlers && webkit.messageHandlers.iosApp) {
         client = "iosApp";
     }
-    document.cookie = "client=" + client + ";path=/;secure";
+    document.cookie = "client=" + client + ";path=/"; // ここではテストのため、localhostへはhttpでアクセスするため、secure属性を付与しない。
 
     function saveSelectedValues() {
         document.getElementById('error').textContent = '';
         let hd8 = document.getElementById('hd8').value;
         let hd10 = document.getElementById('hd10').value;
-        document.cookie = "hd8=" + hd8 + ";path=/;secure";
-        document.cookie = "hd10=" + hd10 + ";path=/;secure";
+        document.cookie = "hd8=" + hd8 + ";path=/"; // ここではテストのため、localhostへはhttpでアクセスするため、secure属性を付与しない。
+        document.cookie = "hd10=" + hd10 + ";path=/"; // ここではテストのため、localhostへはhttpでアクセスするため、secure属性を付与しない。
     }
     saveSelectedValues();
     document.getElementById('hd8').addEventListener('change', saveSelectedValues);

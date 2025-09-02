@@ -19,11 +19,13 @@ const ejs = require('ejs');
 const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const https = require('https');
+const http = require('http');
 app.set('ejs', ejs.renderFile)
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(bodyParser.json())
 app.use(cookieParser());
-const appServer = https.createServer(options, app);
+const tlsAppServer = https.createServer(options, app);
+const appServer = http.createServer(app);
 
 // Amazon Pay SDK
 const Client = require('@amazonpay/amazon-pay-api-sdk-nodejs');
@@ -60,7 +62,7 @@ app.get('/appLogin', async (req, res) => {
         'appLogin.ejs', 
         newConfig (
             newFullPayload (
-                `https://amazon-pay-links-v2.s3-ap-northeast-1.amazonaws.com/redirector_local-${req.query.client}.html?token=${req.query.token}`,
+                `https://dzpmbh5sopa6k.cloudfront.net/redirector_local-${req.query.client}.html?token=${req.query.token}`,
                 `https://${req.headers.host}/static/cancel.html?client=${req.query.client}`
             )
         )
@@ -100,7 +102,7 @@ function newFullPayload(url, cancelUrl) {
 //-------------------------
 app.get('/sample/checkoutReview', async (req, res) => {
     // 受注情報
-    let order = {host: req.headers.host, amazonCheckoutSessionId: req.query.amazonCheckoutSessionId,
+    let order = {amazonCheckoutSessionId: req.query.amazonCheckoutSessionId,
         client: req.cookies.client, hd8: req.cookies.hd8, hd10: req.cookies.hd10, items: []};
     order.items.push({id: 'item0008', name: 'Fire HD8', price: 8980, num: parseInt(order.hd8)});
     order.items.push({id: 'item0010', name: 'Fire HD10', price: 15980, num: parseInt(order.hd10)});
@@ -114,7 +116,7 @@ app.get('/sample/checkoutReview', async (req, res) => {
     order.checkoutSession = JSON.parse(payload.body);
 
     // Note: 一般的には受注情報はSessionやDBなどを使ってServer側に保持しますが、本サンプルではシンプルにするためにCookieを使用しています
-    res.cookie('session', JSON.stringify(order), {secure: true});
+    res.cookie('session', JSON.stringify(order), {secure: false}); // ここではテストのため、localhostへはhttpでアクセスするため、secure属性を付与しない。
     
     res.render('sample/checkoutReview.ejs', order);
 });
@@ -147,7 +149,7 @@ app.post('/sample/checkoutSession', async (req, res) => {
 
 async function updateCheckoutSession(data) {
     const url = data.client === 'browser' ? "https://localhost:3443/sample/thanks" :
-        `https://${data.host}/static/dispatcher.html?client=${data.client}`;
+        `https://${data.client === 'iosApp' ? 'localhost' : '10.0.2.2'}:3443/static/dispatcher.html?client=${data.client}`;
     return await apClient.updateCheckoutSession(data.amazonCheckoutSessionId, {
         webCheckoutDetails: {
             checkoutResultReturnUrl: url
@@ -188,6 +190,6 @@ app.get('/sample/thanks', async (req, res) => {
 //---------------------
 // Start App server
 //---------------------
-const APP_PORT = process.env.APP_PORT || 3443;
-appServer.listen(APP_PORT);
-console.log(`App listening on port ${APP_PORT}`);
+appServer.listen(3080);
+tlsAppServer.listen(3443);
+console.log(`App listening on port 3080(HTTP) and 3443(HTTPS).`);

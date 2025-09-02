@@ -11,6 +11,7 @@ import WebKit
 import SafariServices
 
 class ViewController: UIViewController {
+//class ViewController: UIViewController {
     
     var token: String?
     var webviewUrl: String?
@@ -20,11 +21,11 @@ class ViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         print("ViewController#viewDidAppear")
-        
+
         if webView == nil {
             
             print("start to generate webView")
-            
+
             // WebViewの画面サイズの設定
             var webViewPadding: CGFloat = 0
             if #available(iOS 11.0, *) {
@@ -42,7 +43,7 @@ class ViewController: UIViewController {
             
             // WebViewの生成、orderページの読み込み
             webView = WKWebView(frame: rect, configuration: webConfig)
-            let webUrl = URL(string: "https://localhost:3443/sample/cart")!
+            let webUrl = URL(string: "http://localhost:3080/sample/cart")!
             let myRequest = URLRequest(url: webUrl)
             webView.load(myRequest)
             
